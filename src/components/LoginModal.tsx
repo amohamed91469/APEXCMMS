@@ -96,7 +96,48 @@ export const LoginModal: React.FC = () => {
           </button>
         </form>
 
-        <div className="pt-4 border-t border-slate-800 text-center text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
+        {/* Quick Demo Test Accounts */}
+        <div className="pt-2 space-y-2 border-t border-slate-800/80">
+          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-center">
+            Test RBAC Roles (1-Click Fill)
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => { setUsername('admin'); setPassword('password123'); }}
+              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-left transition-colors"
+            >
+              <div className="font-bold text-white text-xs">Administrator</div>
+              <div className="text-[10px] text-cyan-400 font-mono">admin / Full Access</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setUsername('manager'); setPassword('password123'); }}
+              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-left transition-colors"
+            >
+              <div className="font-bold text-white text-xs">Manager</div>
+              <div className="text-[10px] text-purple-400 font-mono">manager / Operations</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setUsername('supervisor'); setPassword('password123'); }}
+              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-left transition-colors"
+            >
+              <div className="font-bold text-white text-xs">Supervisor</div>
+              <div className="text-[10px] text-amber-400 font-mono">supervisor / Dispatch</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setUsername('technician'); setPassword('password123'); }}
+              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-left transition-colors"
+            >
+              <div className="font-bold text-white text-xs">Technician</div>
+              <div className="text-[10px] text-teal-400 font-mono">technician / Work Done</div>
+            </button>
+          </div>
+        </div>
+
+        <div className="pt-2 text-center text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-cyan-500" />
           <span>Bcrypt Encrypted • Role-Based Access Control</span>
         </div>

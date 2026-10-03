@@ -24,6 +24,7 @@ interface CMMSContextType {
   isInitialized: boolean;
   isLoading: boolean;
   login: (credentials: { username: string; password: string }) => Promise<void>;
+  switchUser: (username: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
 
@@ -35,6 +36,7 @@ interface CMMSContextType {
   technicians: Technician[];
   categories: FaultCategory[];
   modules: ModuleDefinition[];
+  allUsers: User[];
   refreshMasterData: () => Promise<void>;
 
   // Helper terminology functions
@@ -65,6 +67,7 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [categories, setCategories] = useState<FaultCategory[]>([]);
   const [modules, setModules] = useState<ModuleDefinition[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -82,14 +85,15 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshMasterData = useCallback(async () => {
     try {
-      const [levelsRes, nodesRes, typesRes, techRes, catRes, modRes, settingsRes] = await Promise.all([
+      const [levelsRes, nodesRes, typesRes, techRes, catRes, modRes, settingsRes, usersRes] = await Promise.all([
         api.getLevels().catch(() => ({ levels: [] })),
         api.getNodes().catch(() => ({ nodes: [] })),
         api.getEquipmentTypes().catch(() => ({ types: [] })),
         api.getTechnicians().catch(() => ({ technicians: [] })),
         api.getCategories().catch(() => ({ categories: [] })),
         api.getModules().catch(() => ({ modules: [] })),
-        api.getSettings().catch(() => ({ settings: null as any }))
+        api.getSettings().catch(() => ({ settings: null as any })),
+        api.getUsers().catch(() => ({ users: [] }))
       ]);
 
       setLevels(levelsRes.levels || []);
@@ -98,6 +102,7 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTechnicians(techRes.technicians || []);
       setCategories(catRes.categories || []);
       setModules(modRes.modules || []);
+      setAllUsers(usersRes.users || []);
       if (settingsRes.settings) {
         setSettings(settingsRes.settings);
       }
@@ -145,6 +150,14 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await refreshMasterData();
   };
 
+  const switchUser = async (username: string) => {
+    const res = await api.switchUser(username);
+    setStoredToken(res.token);
+    setUser(res.user);
+    showToast(`Switched active session to ${res.user.fullName} (${res.user.roleName || res.user.roleId})`, 'success');
+    await refreshMasterData();
+  };
+
   const logout = async () => {
     try {
       await api.logout();
@@ -158,8 +171,8 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = useCallback((perm: string): boolean => {
     if (!user) return false;
-    if (user.roleId === 'role_admin' || user.permissions.includes('*')) return true;
-    return user.permissions.includes(perm);
+    if (user.roleId === 'role_admin' || user.permissions?.includes('*')) return true;
+    return Array.isArray(user.permissions) && user.permissions.includes(perm);
   }, [user]);
 
   // Dynamic terminology helper
@@ -198,6 +211,7 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isInitialized,
         isLoading,
         login,
+        switchUser,
         logout,
         refreshAuth,
         settings,
@@ -207,6 +221,7 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         technicians,
         categories,
         modules,
+        allUsers,
         refreshMasterData,
         getLevelName,
         getNodeById,

@@ -241,21 +241,93 @@ export class CMMSStore {
         const parsed = JSON.parse(raw);
         // Ensure all arrays and sub-objects exist
         const defaultState = this.getDefaultState();
-        return {
+        const merged: DatabaseSchema = {
           ...defaultState,
           ...parsed,
           roles: parsed.roles?.length ? parsed.roles : defaultState.roles,
           modules: parsed.modules?.length ? parsed.modules : defaultState.modules,
           dashboardWidgets: parsed.dashboardWidgets?.length ? parsed.dashboardWidgets : defaultState.dashboardWidgets
         };
+        this.ensureDemonstrationUsers(merged);
+        return merged;
       } catch (e) {
         console.error('Failed to load database from file, initializing fresh state', e);
       }
     }
 
     const state = this.getDefaultState();
+    this.ensureDemonstrationUsers(state);
     this.persistSync(state);
     return state;
+  }
+
+  private ensureDemonstrationUsers(state: DatabaseSchema) {
+    if (!state.users) state.users = [];
+    const salt = bcrypt.genSaltSync(10);
+    const defaultPasswordHash = bcrypt.hashSync('password123', salt);
+
+    const demoUsersToEnsure = [
+      {
+        id: 'user_demo_admin',
+        username: 'admin',
+        fullName: 'System Administrator',
+        email: 'admin@metro-cmms.internal',
+        roleId: 'role_admin',
+        status: 'active' as const
+      },
+      {
+        id: 'user_demo_manager',
+        username: 'manager',
+        fullName: 'Omar Tarek (Maintenance Manager)',
+        email: 'manager@metro-cmms.internal',
+        roleId: 'role_manager',
+        status: 'active' as const
+      },
+      {
+        id: 'user_demo_supervisor',
+        username: 'supervisor',
+        fullName: 'Khaled Zaki (Maintenance Supervisor)',
+        email: 'supervisor@metro-cmms.internal',
+        roleId: 'role_supervisor',
+        status: 'active' as const
+      },
+      {
+        id: 'user_demo_tech',
+        username: 'technician',
+        fullName: 'Ahmed Hassan (Field Technician)',
+        email: 'tech@metro-cmms.internal',
+        roleId: 'role_technician',
+        status: 'active' as const
+      },
+      {
+        id: 'user_demo_analyst',
+        username: 'analyst',
+        fullName: 'Dina Samir (Operations Analyst)',
+        email: 'analyst@metro-cmms.internal',
+        roleId: 'role_analyst',
+        status: 'active' as const
+      }
+    ];
+
+    let modified = false;
+    for (const demo of demoUsersToEnsure) {
+      const existing = state.users.find(u => u.username.toLowerCase() === demo.username.toLowerCase());
+      if (!existing) {
+        state.users.push({
+          ...demo,
+          passwordHash: defaultPasswordHash,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: 'system',
+          updatedBy: 'system'
+        });
+        modified = true;
+      }
+    }
+
+    if (modified) {
+      this.persistSync(state);
+    }
   }
 
   private persistSync(state: DatabaseSchema) {
@@ -931,16 +1003,34 @@ export class CMMSStore {
   public getUsers(): User[] {
     return this.db.users.map(({ passwordHash, ...u }) => {
       const role = this.db.roles.find(r => r.id === u.roleId);
-      return { ...u, roleName: role ? role.name : u.roleId };
+      return {
+        ...u,
+        roleName: role ? role.name : u.roleId,
+        permissions: role?.permissions || []
+      };
     });
   }
 
-  public getUserById(id: string): (User & { passwordHash: string }) | undefined {
-    return this.db.users.find(u => u.id === id);
+  public getUserById(id: string): (User & { passwordHash: string; permissions: string[] }) | undefined {
+    const u = this.db.users.find(user => user.id === id);
+    if (!u) return undefined;
+    const role = this.db.roles.find(r => r.id === u.roleId);
+    return {
+      ...u,
+      roleName: role ? role.name : u.roleId,
+      permissions: role?.permissions || []
+    };
   }
 
-  public getUserByUsername(username: string): (User & { passwordHash: string }) | undefined {
-    return this.db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  public getUserByUsername(username: string): (User & { passwordHash: string; permissions: string[] }) | undefined {
+    const u = this.db.users.find(user => user.username.toLowerCase() === username.toLowerCase());
+    if (!u) return undefined;
+    const role = this.db.roles.find(r => r.id === u.roleId);
+    return {
+      ...u,
+      roleName: role ? role.name : u.roleId,
+      permissions: role?.permissions || []
+    };
   }
 
   public createUser(userData: {
@@ -992,7 +1082,11 @@ export class CMMSStore {
     this.save();
     const { passwordHash: _, ...safeUser } = newUser;
     const role = this.db.roles.find(r => r.id === safeUser.roleId);
-    return { ...safeUser, roleName: role?.name };
+    return {
+      ...safeUser,
+      roleName: role?.name,
+      permissions: role?.permissions || []
+    };
   }
 
   public updateUser(id: string, updates: Partial<User> & { password?: string }, actor: { id: string; name: string }): User {
@@ -1032,7 +1126,11 @@ export class CMMSStore {
     this.save();
     const { passwordHash: _, ...safeUser } = updated;
     const role = this.db.roles.find(r => r.id === safeUser.roleId);
-    return { ...safeUser, roleName: role?.name };
+    return {
+      ...safeUser,
+      roleName: role?.name,
+      permissions: role?.permissions || []
+    };
   }
 
   public getRoles(): Role[] {
@@ -1084,6 +1182,31 @@ export class CMMSStore {
     });
     this.save();
     return updated;
+  }
+
+  public deleteRole(id: string, actor: { id: string; name: string }): void {
+    const index = this.db.roles.findIndex(r => r.id === id);
+    if (index === -1) throw new Error('Role not found');
+    const role = this.db.roles[index];
+    if (role.isSystem) {
+      throw new Error('System-defined default roles cannot be deleted.');
+    }
+    const assignedUsers = this.db.users.filter(u => u.roleId === id);
+    if (assignedUsers.length > 0) {
+      throw new Error(`Cannot delete role "${role.name}" because ${assignedUsers.length} user(s) are assigned to it. Reassign users first.`);
+    }
+    this.db.roles.splice(index, 1);
+    this.logAudit({
+      user: actor.name || actor.id,
+      userName: actor.name,
+      action: 'DELETE_ROLE',
+      module: 'Administration',
+      entity: 'Role',
+      entityId: id,
+      oldValue: role.name,
+      details: `Deleted custom role ${role.name}`
+    });
+    this.save();
   }
 
   // --- Audit Logs ---
@@ -1715,6 +1838,71 @@ export class CMMSStore {
         notes: 'Verified by station supervisor'
       }
     ];
+
+    // 9. Demonstration Users for each RBAC Role
+    const defaultPasswordHash = bcrypt.hashSync('password123', bcrypt.genSaltSync(10));
+    const demoUsers = [
+      {
+        id: 'user_demo_manager',
+        username: 'manager',
+        fullName: 'Omar Tarek (Maintenance Manager)',
+        email: 'manager@metro-cmms.internal',
+        roleId: 'role_manager',
+        status: 'active' as const,
+        passwordHash: defaultPasswordHash,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: 'system',
+        updatedBy: 'system'
+      },
+      {
+        id: 'user_demo_supervisor',
+        username: 'supervisor',
+        fullName: 'Khaled Zaki (Maintenance Supervisor)',
+        email: 'supervisor@metro-cmms.internal',
+        roleId: 'role_supervisor',
+        status: 'active' as const,
+        passwordHash: defaultPasswordHash,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: 'system',
+        updatedBy: 'system'
+      },
+      {
+        id: 'user_demo_tech',
+        username: 'technician',
+        fullName: 'Ahmed Hassan (Technician)',
+        email: 'tech@metro-cmms.internal',
+        roleId: 'role_technician',
+        technicianId: 'tech_01',
+        status: 'active' as const,
+        passwordHash: defaultPasswordHash,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: 'system',
+        updatedBy: 'system'
+      },
+      {
+        id: 'user_demo_analyst',
+        username: 'analyst',
+        fullName: 'Dina Samir (Operations Analyst)',
+        email: 'analyst@metro-cmms.internal',
+        roleId: 'role_analyst',
+        status: 'active' as const,
+        passwordHash: defaultPasswordHash,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: 'system',
+        updatedBy: 'system'
+      }
+    ];
+
+    // Only add if not already present
+    for (const du of demoUsers) {
+      if (!this.db.users.some(u => u.username === du.username)) {
+        this.db.users.push(du);
+      }
+    }
 
     this.save();
   }

@@ -83,7 +83,7 @@ faultsRouter.put('/:id', requireAuth, requirePermission('faults:edit'), (req: Au
 
 // Status transition endpoint
 faultsRouter.patch('/:id/status', requireAuth, (req: AuthenticatedRequest, res) => {
-  const { status, waitingReason, notes, workDone, correctiveAction, maintenanceEnd, restorationDate } = req.body;
+  const { status, waitingReason, notes, workDone, correctiveAction, maintenanceStart, maintenanceEnd, restorationDate } = req.body;
   if (!status) {
     return res.status(400).json({ error: 'New status is required' });
   }
@@ -108,7 +108,8 @@ faultsRouter.patch('/:id/status', requireAuth, (req: AuthenticatedRequest, res) 
     };
     if (workDone) updates.workDone = workDone;
     if (correctiveAction) updates.correctiveAction = correctiveAction;
-    if (maintenanceEnd) updates.maintenanceEnd = maintenanceEnd;
+    if (maintenanceStart !== undefined) updates.maintenanceStart = maintenanceStart;
+    if (maintenanceEnd !== undefined) updates.maintenanceEnd = maintenanceEnd;
     if (restorationDate) updates.restorationDate = restorationDate;
 
     // If resolving or closing without restorationDate set, default to maintenanceEnd or now

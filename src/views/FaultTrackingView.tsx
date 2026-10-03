@@ -65,6 +65,7 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
   const [transitionNotes, setTransitionNotes] = useState('');
   const [workDoneInput, setWorkDoneInput] = useState('');
   const [correctiveActionInput, setCorrectiveActionInput] = useState('');
+  const [mStartInput, setMStartInput] = useState('');
   const [mEndInput, setMEndInput] = useState('');
 
   const level1Name = getLevelName(1);
@@ -110,6 +111,7 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
     setTargetStatus(fault.status);
     setWorkDoneInput(fault.workDone || '');
     setCorrectiveActionInput(fault.correctiveAction || '');
+    setMStartInput(fault.maintenanceStart || '');
     setMEndInput(fault.maintenanceEnd || '');
     setTransitionNotes('');
 
@@ -131,6 +133,7 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
         waitingReason: targetStatus === 'Waiting' ? waitingReason : undefined,
         workDone: workDoneInput,
         correctiveAction: correctiveActionInput,
+        maintenanceStart: mStartInput,
         maintenanceEnd: mEndInput
       };
 
@@ -595,8 +598,11 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
                   <input
                     type="text"
                     disabled={modalMode === 'view'}
-                    value={activeFault.maintenanceStart || ''}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white disabled:opacity-60"
+                    readOnly={modalMode === 'view'}
+                    value={mStartInput}
+                    onChange={e => setMStartInput(e.target.value)}
+                    placeholder="YYYY-MM-DDTHH:mm or HH:mm"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:border-cyan-500 disabled:opacity-60"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -604,10 +610,11 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
                   <input
                     type="text"
                     disabled={modalMode === 'view'}
+                    readOnly={modalMode === 'view'}
                     value={mEndInput}
                     onChange={e => setMEndInput(e.target.value)}
                     placeholder="YYYY-MM-DDTHH:mm or HH:mm"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:border-cyan-500"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:border-cyan-500 disabled:opacity-60"
                   />
                 </div>
               </div>

@@ -12,6 +12,7 @@ import { ReportsView } from './views/ReportsView.tsx';
 import { ExcelImportView } from './views/ExcelImportView.tsx';
 import { StructureAdminView } from './views/StructureAdminView.tsx';
 import { UsersAdminView } from './views/UsersAdminView.tsx';
+import { RolesAdminView } from './views/RolesAdminView.tsx';
 import { AuditLogView } from './views/AuditLogView.tsx';
 import { MasterDataView } from './views/MasterDataView.tsx';
 import { SettingsView } from './views/SettingsView.tsx';
@@ -97,8 +98,9 @@ const CMMSApp: React.FC = () => {
       case 'admin_structure':
         return <StructureAdminView />;
       case 'admin_users':
-      case 'admin_roles':
         return <UsersAdminView />;
+      case 'admin_roles':
+        return <RolesAdminView />;
       case 'admin_audit':
         return <AuditLogView />;
       case 'admin_masterdata':

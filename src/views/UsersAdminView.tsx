@@ -23,6 +23,7 @@ export const UsersAdminView: React.FC = () => {
   const [rolesList, setRolesList] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState('');
 
   // User modal
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -181,20 +182,33 @@ export const UsersAdminView: React.FC = () => {
       </div>
 
       {/* Search & Stats */}
-      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search users by name, username, email..."
-            className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
-          />
+      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div className="flex items-center gap-3 flex-1 min-w-[240px]">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search users by name, username, email..."
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+
+          <select
+            value={selectedRoleFilter}
+            onChange={e => setSelectedRoleFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 focus:outline-none focus:border-cyan-500"
+          >
+            <option value="">All Roles</option>
+            {rolesList.map(r => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="text-xs text-slate-400">
-          Total Users: <span className="font-bold text-white">{usersList.length}</span>
+        <div className="text-slate-400">
+          Showing <span className="font-bold text-white">{filteredUsers.length}</span> of {usersList.length} users
         </div>
       </div>
 

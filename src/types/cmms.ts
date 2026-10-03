@@ -173,6 +173,7 @@ export interface User {
   technicianId?: string;
   roleId: string;
   roleName?: string;
+  permissions?: string[];
   status: 'active' | 'inactive' | 'suspended';
   lastLogin?: string;
   createdAt: string;

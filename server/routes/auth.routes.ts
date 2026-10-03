@@ -102,10 +102,16 @@ authRouter.post('/setup', (req, res) => {
       // Create session for immediate login
       const token = createSession(newAdmin.id);
 
+      const adminRole = store.getRoles().find(r => r.id === 'role_admin');
+
       return res.status(201).json({
         message: 'System successfully initialized',
         token,
-        user: newAdmin
+        user: {
+          ...newAdmin,
+          roleName: adminRole?.name || 'Administrator',
+          permissions: adminRole?.permissions || ['*']
+        }
       });
     });
   } catch (err: any) {
@@ -136,6 +142,38 @@ authRouter.post('/login', (req, res) => {
 
   // Update last login
   store.updateUser(rawUser.id, { lastLogin: new Date().toISOString() }, { id: rawUser.id, name: rawUser.fullName });
+
+  const token = createSession(rawUser.id);
+  const roles = store.getRoles();
+  const role = roles.find(r => r.id === rawUser.roleId);
+
+  const { passwordHash: _, ...safeUser } = rawUser;
+
+  res.json({
+    token,
+    user: {
+      ...safeUser,
+      roleName: role?.name || rawUser.roleId,
+      permissions: role?.permissions || []
+    }
+  });
+});
+
+// Quick switch user endpoint for testing & role simulation
+authRouter.post('/switch-user', (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
+
+  const rawUser = store.getUserByUsername(username);
+  if (!rawUser) {
+    return res.status(404).json({ error: `User "${username}" not found in system` });
+  }
+
+  if (rawUser.status !== 'active') {
+    return res.status(403).json({ error: `Account "${username}" is ${rawUser.status}` });
+  }
 
   const token = createSession(rawUser.id);
   const roles = store.getRoles();

@@ -76,6 +76,10 @@ export const api = {
     body: JSON.stringify(credentials)
   }),
   logout: () => request<{ message: string }>('/api/auth/logout', { method: 'POST' }),
+  switchUser: (username: string) => request<{ token: string; user: User & { permissions: string[] } }>('/api/auth/switch-user', {
+    method: 'POST',
+    body: JSON.stringify({ username })
+  }),
   getCurrentUser: () => request<{ user: User & { permissions: string[] } }>('/api/auth/me'),
 
   // Generic Hierarchy & Structure
@@ -154,6 +158,7 @@ export const api = {
     notes?: string;
     workDone?: string;
     correctiveAction?: string;
+    maintenanceStart?: string | null;
     maintenanceEnd?: string | null;
     restorationDate?: string | null;
   }) => request<{ fault: Fault; history: FaultStatusHistory[]; message: string }>(`/api/faults/${id}/status`, {
@@ -262,6 +267,9 @@ export const api = {
   updateRole: (id: string, data: any) => request<{ role: Role }>(`/api/users/roles/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
+  }),
+  deleteRole: (id: string) => request<{ message: string }>(`/api/users/roles/${id}`, {
+    method: 'DELETE'
   }),
 
   // Audit Logs
