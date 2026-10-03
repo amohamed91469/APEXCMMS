@@ -1,0 +1,6 @@
+{
+  "name": "ApexCMMS - Modular Enterprise Maintenance Management System",
+  "description": "Configurable, modular enterprise CMMS for fault tracking, maintenance history, generic organizational hierarchies, Excel data migration, TTR/downtime analytics, and audit logging.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
