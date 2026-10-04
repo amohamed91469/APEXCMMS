@@ -223,7 +223,12 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
               if (selectedRelevant) params.append('relevantState', selectedRelevant);
               if (startDate) params.append('startDate', startDate);
               if (endDate) params.append('endDate', endDate);
-              window.open(`/api/data/export/faults?${params.toString()}`, '_blank');
+              const link = document.createElement('a');
+              link.href = `/api/data/export/faults?${params.toString()}`;
+              link.setAttribute('download', `Fault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
             }}
             className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
           >

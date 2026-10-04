@@ -165,7 +165,12 @@ export const ExcelImportView: React.FC<ExcelImportViewProps> = ({ onNavigate }) 
 
   const handleDownloadErrors = () => {
     if (!commitResult?.jobId) return;
-    window.open(`/api/data/jobs/${commitResult.jobId}/errors/export`, '_blank');
+    const link = document.createElement('a');
+    link.href = `/api/data/jobs/${commitResult.jobId}/errors/export`;
+    link.setAttribute('download', `Import_Errors_${commitResult.jobId}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const activeSheet = inspectData?.sheets.find((s: any) => s.sheetName === selectedSheet) || inspectData?.sheets[0];

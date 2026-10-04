@@ -83,7 +83,12 @@ export const ReportsView: React.FC = () => {
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
 
-    window.open(`/api/data/export/faults?${params.toString()}`, '_blank');
+    const link = document.createElement('a');
+    link.href = `/api/data/export/faults?${params.toString()}`;
+    link.setAttribute('download', `Fault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (

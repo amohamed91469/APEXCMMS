@@ -155,3 +155,82 @@ export function formatMinutes(minutes?: number | null): string {
   }
   return `${mins}m`;
 }
+
+/**
+ * Returns current local time strictly in 24h format (HH:mm)
+ */
+export function getCurrent24hTime(): string {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+/**
+ * Returns current date strictly in ISO format (YYYY-MM-DD)
+ */
+export function getTodayDate(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Formats a Date or date string to strict 24h time string (HH:mm)
+ */
+export function format24hTime(val?: string | Date | null): string {
+  if (!val) return '';
+  if (typeof val === 'string' && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]/.test(val.trim())) {
+    const parts = val.trim().split(':');
+    return `${parts[0].padStart(2, '0')}:${parts[1].slice(0, 2)}`;
+  }
+  const d = typeof val === 'string' ? parseFlexibleDateTime(val) : val;
+  if (!d || isNaN(d.getTime())) return '';
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+/**
+ * Formats a Date or date string to strict 24h datetime string (YYYY-MM-DD HH:mm)
+ */
+export function format24hDateTime(val?: string | Date | null): string {
+  if (!val) return '';
+  const d = typeof val === 'string' ? parseFlexibleDateTime(val) : val;
+  if (!d || isNaN(d.getTime())) return typeof val === 'string' ? val : '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${day} ${hh}:${mm}`;
+}
+
+/**
+ * Offsets a 24h time string (HH:mm) by given minutes, wrapping correctly around 24h
+ */
+export function offset24hTime(timeStr: string, deltaMinutes: number): string {
+  if (!timeStr) return getCurrent24hTime();
+  const [hhStr, mmStr] = timeStr.split(':');
+  let totalMin = parseInt(hhStr || '0', 10) * 60 + parseInt(mmStr || '0', 10) + deltaMinutes;
+  totalMin = ((totalMin % 1440) + 1440) % 1440;
+  const newH = String(Math.floor(totalMin / 60)).padStart(2, '0');
+  const newM = String(totalMin % 60).padStart(2, '0');
+  return `${newH}:${newM}`;
+}
+
+/**
+ * Standardize any datetime or time string into a clean 24h representation
+ */
+export function normalizeTo24h(val?: string | null): string {
+  if (!val) return '';
+  const str = val.trim();
+  // If already HH:mm
+  if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(str)) {
+    const [h, m] = str.split(':');
+    return `${h.padStart(2, '0')}:${m}`;
+  }
+  return format24hDateTime(str);
+}

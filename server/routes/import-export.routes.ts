@@ -1,33 +1,55 @@
 import { Router } from 'express';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { store } from '../db/store.ts';
 import { requireAuth, requirePermission, AuthenticatedRequest } from '../services/auth.ts';
-import { calculateTTR, calculateDowntime, parseFlexibleDateTime } from '../../src/utils/timeCalculations.ts';
+import { calculateTTR, calculateDowntime, parseFlexibleDateTime, format24hTime } from '../../src/utils/timeCalculations.ts';
 import { Fault, ImportJob, ImportErrorItem } from '../../src/types/cmms.ts';
 
 export const importExportRouter = Router();
 
-// Helper to parse dates from Excel (supporting numbers, serial dates, strings)
+// Helper to parse dates from Excel in 24h format (supporting Date objects, serial dates, strings)
 function parseExcelDate(val: any): { dateStr: string; timeStr: string } {
   if (val === null || val === undefined || val === '') {
     return { dateStr: '', timeStr: '' };
   }
 
-  // If number (Excel serial date)
-  if (typeof val === 'number') {
-    // Excel base date 1899-12-30
-    const parsedDate = XLSX.SSF.parse_date_code(val);
-    if (parsedDate) {
-      const y = parsedDate.y;
-      const m = String(parsedDate.m).padStart(2, '0');
-      const d = String(parsedDate.d).padStart(2, '0');
-      const hh = String(parsedDate.H || 0).padStart(2, '0');
-      const mm = String(parsedDate.M || 0).padStart(2, '0');
+  // If Date object (ExcelJS automatically produces Date objects for date cells)
+  if (val instanceof Date) {
+    if (!isNaN(val.getTime())) {
+      const y = val.getFullYear();
+      const m = String(val.getMonth() + 1).padStart(2, '0');
+      const d = String(val.getDate()).padStart(2, '0');
+      const hh = String(val.getHours()).padStart(2, '0');
+      const mm = String(val.getMinutes()).padStart(2, '0');
       return {
         dateStr: `${y}-${m}-${d}`,
         timeStr: `${hh}:${mm}`
       };
     }
+  }
+
+  // If number (Excel serial date)
+  if (typeof val === 'number') {
+    // 25569 is days between 1899-12-30 and 1970-01-01
+    const ms = Math.round((val - 25569) * 86400 * 1000);
+    const dateObj = new Date(ms);
+    if (!isNaN(dateObj.getTime())) {
+      const y = dateObj.getUTCFullYear();
+      const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getUTCDate()).padStart(2, '0');
+      const hh = String(dateObj.getUTCHours()).padStart(2, '0');
+      const mm = String(dateObj.getUTCMinutes()).padStart(2, '0');
+      return {
+        dateStr: `${y}-${m}-${d}`,
+        timeStr: `${hh}:${mm}`
+      };
+    }
+  }
+
+  // If object with text or result (rich text in ExcelJS)
+  if (typeof val === 'object') {
+    if ('text' in val) val = val.text;
+    else if ('result' in val) val = val.result;
   }
 
   const str = String(val).trim();
@@ -40,7 +62,7 @@ function parseExcelDate(val: any): { dateStr: string; timeStr: string } {
     };
   }
 
-  // Check if contains both date and time (e.g. "2026-09-15 10:15")
+  // Check if contains both date and time (e.g. "2026-09-15 14:35")
   if (str.includes(' ') && str.length >= 14) {
     const [d, t] = str.split(' ');
     return {
@@ -49,9 +71,10 @@ function parseExcelDate(val: any): { dateStr: string; timeStr: string } {
     };
   }
 
-  // Check if string is just time (e.g. "10:15")
+  // Check if string is just 24h time (e.g. "14:35")
   if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]/.test(str)) {
-    return { dateStr: '', timeStr: str.slice(0, 5) };
+    const parts = str.split(':');
+    return { dateStr: '', timeStr: `${parts[0].padStart(2, '0')}:${parts[1].slice(0, 2)}` };
   }
 
   // Standard date parsing (e.g. DD/MM/YYYY or YYYY-MM-DD)
@@ -71,8 +94,53 @@ function parseExcelDate(val: any): { dateStr: string; timeStr: string } {
   return { dateStr: str, timeStr: '' };
 }
 
-// 1. Inspect uploaded Excel data (sent as base64 or raw buffer)
-importExportRouter.post('/inspect', requireAuth, requirePermission('import:execute'), (req, res) => {
+// Extract rows as key-value objects from an ExcelJS worksheet
+function extractSheetData(worksheet: ExcelJS.Worksheet): { headers: string[]; rows: Record<string, any>[] } {
+  const headers: string[] = [];
+  const rows: Record<string, any>[] = [];
+
+  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    const values = row.values as any[];
+    if (!values || values.length === 0) return;
+
+    if (headers.length === 0) {
+      // First non-empty row is header row
+      // Note: ExcelJS row.values is 1-indexed (values[0] is undefined)
+      for (let i = 1; i < values.length; i++) {
+        let h = values[i];
+        if (h && typeof h === 'object' && 'text' in h) h = h.text;
+        const colName = String(h ?? '').trim();
+        if (colName) {
+          headers.push(colName);
+        } else {
+          headers.push(`Column_${i}`);
+        }
+      }
+    } else {
+      const rowObj: Record<string, any> = {};
+      let hasData = false;
+      for (let i = 1; i <= headers.length; i++) {
+        const headerName = headers[i - 1];
+        let val = values[i];
+        if (val && typeof val === 'object' && 'text' in val) val = val.text;
+        if (val !== undefined && val !== null && val !== '') {
+          hasData = true;
+          rowObj[headerName] = val;
+        } else {
+          rowObj[headerName] = '';
+        }
+      }
+      if (hasData) {
+        rows.push(rowObj);
+      }
+    }
+  });
+
+  return { headers, rows };
+}
+
+// 1. Inspect uploaded Excel data using ExcelJS
+importExportRouter.post('/inspect', requireAuth, requirePermission('import:execute'), async (req, res) => {
   const { fileBase64, filename } = req.body;
   if (!fileBase64) {
     return res.status(400).json({ error: 'fileBase64 payload is required' });
@@ -80,39 +148,20 @@ importExportRouter.post('/inspect', requireAuth, requirePermission('import:execu
 
   try {
     const buffer = Buffer.from(fileBase64, 'base64');
-    const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as any);
 
-    const sheetNames = workbook.SheetNames;
-    if (sheetNames.length === 0) {
+    if (workbook.worksheets.length === 0) {
       return res.status(400).json({ error: 'Excel file contains no worksheets' });
     }
 
-    const sheetsInfo = sheetNames.map(sheetName => {
-      const worksheet = workbook.Sheets[sheetName];
-      const rawRows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
-
-      if (!rawRows || rawRows.length === 0) {
-        return {
-          sheetName,
-          rowCount: 0,
-          headers: [],
-          sampleRows: []
-        };
-      }
-
-      // First non-empty row as header
-      const headers = (rawRows[0] || []).map(h => String(h || '').trim()).filter(h => h.length > 0);
-      const sampleRows = rawRows.slice(1, 6).map(row => {
-        const rowObj: Record<string, any> = {};
-        headers.forEach((h, idx) => {
-          rowObj[h] = row[idx] !== undefined ? row[idx] : '';
-        });
-        return rowObj;
-      });
+    const sheetsInfo = workbook.worksheets.map(ws => {
+      const { headers, rows } = extractSheetData(ws);
+      const sampleRows = rows.slice(0, 5);
 
       return {
-        sheetName,
-        rowCount: Math.max(0, rawRows.length - 1),
+        sheetName: ws.name,
+        rowCount: rows.length,
         headers,
         sampleRows
       };
@@ -164,7 +213,7 @@ importExportRouter.post('/inspect', requireAuth, requirePermission('import:execu
 });
 
 // 2. Validate parsed Excel rows against system master data
-importExportRouter.post('/validate', requireAuth, requirePermission('import:execute'), (req, res) => {
+importExportRouter.post('/validate', requireAuth, requirePermission('import:execute'), async (req, res) => {
   const { fileBase64, sheetName, mappings, defaultEquipmentType } = req.body;
   if (!fileBase64 || !mappings) {
     return res.status(400).json({ error: 'fileBase64 and mappings are required' });
@@ -172,15 +221,15 @@ importExportRouter.post('/validate', requireAuth, requirePermission('import:exec
 
   try {
     const buffer = Buffer.from(fileBase64, 'base64');
-    const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
-    const targetSheet = sheetName || workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[targetSheet];
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as any);
 
+    const worksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
     if (!worksheet) {
-      return res.status(400).json({ error: `Sheet "${targetSheet}" not found` });
+      return res.status(400).json({ error: `Sheet "${sheetName || 1}" not found in workbook` });
     }
 
-    const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    const { rows: rawRows } = extractSheetData(worksheet);
 
     // Invert mapping: cmmsField -> excelHeader
     const fieldToHeader: Record<string, string> = {};
@@ -220,12 +269,12 @@ importExportRouter.post('/validate', requireAuth, requirePermission('import:exec
         duplicateCount++;
       }
 
-      // 2. Dates & Times
+      // 2. Dates & Times (strictly in 24h format)
       const reportDateRaw = row[fieldToHeader.reportDate];
       const reportTimeRaw = row[fieldToHeader.reportTime];
       const parsedReport = parseExcelDate(reportDateRaw);
       let reportDate = parsedReport.dateStr;
-      let reportTime = (reportTimeRaw ? String(reportTimeRaw).trim() : '') || parsedReport.timeStr || '00:00';
+      let reportTime = (reportTimeRaw ? parseExcelDate(reportTimeRaw).timeStr : '') || parsedReport.timeStr || '00:00';
 
       if (!reportDate) {
         rowErrors.push('Missing or invalid Fault Report Date');
@@ -372,8 +421,8 @@ importExportRouter.post('/validate', requireAuth, requirePermission('import:exec
   }
 });
 
-// 3. Commit Import Transactionally
-importExportRouter.post('/commit', requireAuth, requirePermission('import:execute'), (req: AuthenticatedRequest, res) => {
+// 3. Commit Import Transactionally using ExcelJS
+importExportRouter.post('/commit', requireAuth, requirePermission('import:execute'), async (req: AuthenticatedRequest, res) => {
   const { fileBase64, filename, sheetName, mappings, defaultEquipmentType, duplicateStrategy } = req.body;
   if (!fileBase64 || !mappings) {
     return res.status(400).json({ error: 'fileBase64 and mappings are required' });
@@ -384,10 +433,15 @@ importExportRouter.post('/commit', requireAuth, requirePermission('import:execut
 
   try {
     const buffer = Buffer.from(fileBase64, 'base64');
-    const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
-    const targetSheet = sheetName || workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[targetSheet];
-    const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as any);
+
+    const worksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
+    if (!worksheet) {
+      return res.status(400).json({ error: `Target worksheet not found` });
+    }
+
+    const { rows: rawRows } = extractSheetData(worksheet);
 
     const fieldToHeader: Record<string, string> = {};
     for (const [excelH, cmmsF] of Object.entries(mappings as Record<string, string>)) {
@@ -453,10 +507,10 @@ importExportRouter.post('/commit', requireAuth, requirePermission('import:execut
           }
         }
 
-        // Date & Time
+        // Date & Time in 24h format
         const parsedReport = parseExcelDate(row[fieldToHeader.reportDate]);
         const reportDate = parsedReport.dateStr;
-        const reportTime = (row[fieldToHeader.reportTime] ? String(row[fieldToHeader.reportTime]).trim() : '') || parsedReport.timeStr || '00:00';
+        const reportTime = (row[fieldToHeader.reportTime] ? parseExcelDate(row[fieldToHeader.reportTime]).timeStr : '') || parsedReport.timeStr || '00:00';
 
         if (!reportDate) {
           recordsRejected++;
@@ -497,17 +551,15 @@ importExportRouter.post('/commit', requireAuth, requirePermission('import:execut
         );
 
         if (!targetNode && nodeRaw) {
-          // Auto-create structure node to prevent data loss
-          const targetLevel = levels.length > 1 ? levels[levels.length - 1] : levels[0];
+          const targetLevel = levels[1] || levels[0];
           targetNode = tx.createStructureNode({
             structureLevelId: targetLevel.id,
-            code: nodeRaw.toUpperCase().slice(0, 10).replace(/[^A-Z0-9]/g, ''),
+            code: nodeRaw.slice(0, 8).toUpperCase(),
             name: nodeRaw,
             status: 'active',
             sortOrder: nodes.length + 1
           }, { id: user.id, name: user.fullName });
           nodes = tx.getStructureNodes();
-          warningsCount++;
         }
         const structureNodeId = targetNode ? targetNode.id : defaultNode.id;
 
@@ -517,66 +569,84 @@ importExportRouter.post('/commit', requireAuth, requirePermission('import:execut
         if (!targetEqType && eqTypeRaw) {
           targetEqType = tx.createEquipmentType({
             code: eqTypeRaw.slice(0, 10),
-            name: eqTypeRaw,
+            name: `${eqTypeRaw} Unit`,
             status: 'active'
           }, { id: user.id, name: user.fullName });
           eqTypes = tx.getEquipmentTypes();
-          warningsCount++;
         }
-        const equipmentTypeId = targetEqType ? targetEqType.id : 'type_tvm';
+        const equipmentTypeId = targetEqType ? targetEqType.id : eqTypes[0]?.id;
 
         // Equipment Number
-        const equipNo = String(row[fieldToHeader.equipmentNumber] || `${eqTypeRaw}-01`).trim();
+        const equipNumber = String(row[fieldToHeader.equipmentNumber] || `${eqTypeRaw}-01`).trim();
 
-        // Technician
-        const techRaw = String(row[fieldToHeader.technician] || '').trim();
-        let targetTech = technicians.find(t => t.name.toLowerCase().includes(techRaw.toLowerCase()));
-        if (!targetTech && techRaw && techRaw.length > 2) {
-          targetTech = tx.createTechnician({
-            code: `TECH-${Date.now().toString().slice(-4)}`,
-            name: techRaw,
-            status: 'active'
-          }, { id: user.id, name: user.fullName });
-          technicians = tx.getTechnicians();
-        }
-
-        // Maintenance Start / End / TTR / Downtime
+        // Maintenance Datetimes & Calculations in 24h
         const startParsed = parseExcelDate(row[fieldToHeader.maintenanceStart]);
         const endParsed = parseExcelDate(row[fieldToHeader.maintenanceEnd]);
         const mStart = startParsed.dateStr ? `${startParsed.dateStr}T${startParsed.timeStr || '00:00'}:00` : (startParsed.timeStr || null);
         const mEnd = endParsed.dateStr ? `${endParsed.dateStr}T${endParsed.timeStr || '00:00'}:00` : (endParsed.timeStr || null);
 
-        // Relevant State
-        let relevantState: any = 'Relevant';
-        const relRaw = String(row[fieldToHeader.relevantState] || '').toLowerCase();
-        if (relRaw.includes('non')) relevantState = 'Non-Relevant';
-        else if (relRaw.includes('rev')) relevantState = 'Under Review';
+        const ttr = calculateTTR(mStart, mEnd, reportDate);
+        const downtime = calculateDowntime({
+          reportDate,
+          reportTime,
+          maintenanceStart: mStart,
+          maintenanceEnd: mEnd,
+          restorationDate: mEnd
+        });
 
-        let status: any = String(row[fieldToHeader.status] || '').trim();
-        if (!status) {
-          status = mEnd ? 'Closed' : 'New';
+        // Technician
+        const techRaw = String(row[fieldToHeader.technician] || '').trim();
+        let matchedTech = techRaw ? technicians.find(t => t.name.toLowerCase().includes(techRaw.toLowerCase()) || t.code.toLowerCase() === techRaw.toLowerCase()) : null;
+        if (!matchedTech && techRaw && techRaw.length > 1) {
+          matchedTech = tx.createTechnician({
+            name: techRaw,
+            code: `T-${techRaw.slice(0, 3).toUpperCase()}`,
+            status: 'active'
+          }, { id: user.id, name: user.fullName });
+          technicians = tx.getTechnicians();
+        }
+
+        // Relevant State
+        let relState: 'Relevant' | 'Non-Relevant' | 'Under Review' = 'Relevant';
+        const relRaw = String(row[fieldToHeader.relevantState] || '').trim().toLowerCase();
+        if (relRaw.includes('non')) relState = 'Non-Relevant';
+        else if (relRaw.includes('review') || relRaw.includes('under')) relState = 'Under Review';
+
+        // Priority
+        let prio: 'Low' | 'Medium' | 'High' | 'Emergency' = 'Medium';
+        const pRaw = String(row[fieldToHeader.priority] || '').trim().toLowerCase();
+        if (pRaw.includes('high')) prio = 'High';
+        else if (pRaw.includes('emer') || pRaw.includes('crit')) prio = 'Emergency';
+        else if (pRaw.includes('low')) prio = 'Low';
+
+        // Status
+        let st = String(row[fieldToHeader.status] || '').trim();
+        if (!st) {
+          st = (mEnd || ttr > 0) ? 'Closed' : 'New';
         }
 
         if (existingFault && duplicateStrategy === 'update') {
           tx.updateFault(existingFault.id, {
+            callNumber,
             reportDate,
             reportTime,
             structureNodeId,
             equipmentTypeId,
-            equipmentNumber: equipNo,
+            equipmentNumber: equipNumber,
             faultDescription: faultDesc,
-            relevantState,
-            assignedTechnicianId: targetTech ? targetTech.id : undefined,
-            assignedTechnicianName: targetTech ? targetTech.name : techRaw,
-            workDone: String(row[fieldToHeader.workDone] || '').trim(),
-            correctiveAction: String(row[fieldToHeader.correctiveAction] || '').trim(),
-            maintenanceStart: mStart,
-            maintenanceEnd: mEnd,
-            restorationDate: mEnd,
-            status
+            priority: prio,
+            relevantState: relState,
+            assignedTechnicianId: matchedTech?.id || existingFault.assignedTechnicianId,
+            workDone: String(row[fieldToHeader.workDone] || existingFault.workDone || '').trim(),
+            correctiveAction: String(row[fieldToHeader.correctiveAction] || existingFault.correctiveAction || '').trim(),
+            maintenanceStart: mStart || existingFault.maintenanceStart,
+            maintenanceEnd: mEnd || existingFault.maintenanceEnd,
+            ttrMinutes: ttr || existingFault.ttrMinutes,
+            downtimeMinutes: downtime || existingFault.downtimeMinutes,
+            status: (st as any) || existingFault.status
           }, { id: user.id, name: user.fullName });
           recordsImported++;
-        } else {
+        } else if (!existingFault) {
           tx.createFault({
             callId,
             callNumber,
@@ -584,19 +654,16 @@ importExportRouter.post('/commit', requireAuth, requirePermission('import:execut
             reportTime,
             structureNodeId,
             equipmentTypeId,
-            equipmentNumber: equipNo,
+            equipmentNumber: equipNumber,
             faultDescription: faultDesc,
-            relevantState,
-            priority: 'Medium',
-            assignedTechnicianId: targetTech ? targetTech.id : undefined,
-            assignedTechnicianName: targetTech ? targetTech.name : techRaw,
+            priority: prio,
+            relevantState: relState,
+            assignedTechnicianId: matchedTech?.id || null,
             workDone: String(row[fieldToHeader.workDone] || '').trim(),
             correctiveAction: String(row[fieldToHeader.correctiveAction] || '').trim(),
             maintenanceStart: mStart,
             maintenanceEnd: mEnd,
-            restorationDate: mEnd,
-            status,
-            notes: `Imported from Excel file: ${filename || 'upload'}`
+            status: st as any
           }, { id: user.id, name: user.fullName });
           recordsImported++;
         }
@@ -645,25 +712,50 @@ importExportRouter.post('/commit', requireAuth, requirePermission('import:execut
   }
 });
 
-// 4. Download Import Error Report
-importExportRouter.get('/jobs/:jobId/errors/export', requireAuth, (req, res) => {
-  const errors = store.getImportErrors(req.params.jobId);
-  const rows = errors.map(e => ({
-    'Row Number': e.rowNumber,
-    'Column': e.column,
-    'Value': e.value,
-    'Problem': e.problem,
-    'Suggested Action': e.suggestedAction
-  }));
+// 4. Download Import Error Report using ExcelJS
+importExportRouter.get('/jobs/:jobId/errors/export', requireAuth, async (req, res) => {
+  try {
+    const errors = store.getImportErrors(req.params.jobId);
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'ApexCMMS';
+    workbook.created = new Date();
 
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Import Errors');
-  const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const worksheet = workbook.addWorksheet('Import Errors');
+    worksheet.columns = [
+      { header: 'Row Number', key: 'rowNumber', width: 14 },
+      { header: 'Column', key: 'column', width: 22 },
+      { header: 'Value', key: 'value', width: 26 },
+      { header: 'Problem Description', key: 'problem', width: 36 },
+      { header: 'Suggested Action', key: 'suggestedAction', width: 44 }
+    ];
 
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename=Import_Errors_${req.params.jobId}.xlsx`);
-  res.send(buffer);
+    // Style Header Row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1E293B' }
+    };
+
+    errors.forEach(e => {
+      worksheet.addRow({
+        rowNumber: e.rowNumber,
+        column: e.column,
+        value: e.value,
+        problem: e.problem,
+        suggestedAction: e.suggestedAction
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=Import_Errors_${req.params.jobId}.xlsx`);
+    res.send(Buffer.from(buffer));
+  } catch (err: any) {
+    res.status(500).json({ error: `Failed to export error report: ${err.message}` });
+  }
 });
 
 // 5. Mapping templates
@@ -680,68 +772,107 @@ importExportRouter.post('/mappings', requireAuth, requirePermission('import:exec
   res.status(201).json({ template: tpl });
 });
 
-// 6. Export Filtered Faults to Excel
-importExportRouter.get('/export/faults', requireAuth, requirePermission('reports:export'), (req, res) => {
-  const {
-    search,
-    structureNodeId,
-    equipmentTypeId,
-    equipmentNumber,
-    technicianId,
-    status,
-    relevantState,
-    priority,
-    startDate,
-    endDate
-  } = req.query;
+// 6. Export Filtered Faults to Excel using ExcelJS with clean 24h formatting
+importExportRouter.get('/export/faults', requireAuth, requirePermission('reports:export'), async (req, res) => {
+  try {
+    const {
+      search,
+      structureNodeId,
+      equipmentTypeId,
+      equipmentNumber,
+      technicianId,
+      status,
+      relevantState,
+      priority,
+      startDate,
+      endDate
+    } = req.query;
 
-  const { faults } = store.getFaults({
-    search: search as string,
-    structureNodeId: structureNodeId as string,
-    equipmentTypeId: equipmentTypeId as string,
-    equipmentNumber: equipmentNumber as string,
-    technicianId: technicianId as string,
-    status: status as string,
-    relevantState: relevantState as string,
-    priority: priority as string,
-    startDate: startDate as string,
-    endDate: endDate as string,
-    limit: 100000
-  });
+    const { faults } = store.getFaults({
+      search: search as string,
+      structureNodeId: structureNodeId as string,
+      equipmentTypeId: equipmentTypeId as string,
+      equipmentNumber: equipmentNumber as string,
+      technicianId: technicianId as string,
+      status: status as string,
+      relevantState: relevantState as string,
+      priority: priority as string,
+      startDate: startDate as string,
+      endDate: endDate as string,
+      limit: 100000
+    });
 
-  const nodes = store.getStructureNodes();
-  const eqTypes = store.getEquipmentTypes();
-  const nodeMap = new Map(nodes.map(n => [n.id, n.name]));
-  const eqTypeMap = new Map(eqTypes.map(t => [t.id, t.code]));
+    const nodes = store.getStructureNodes();
+    const eqTypes = store.getEquipmentTypes();
+    const nodeMap = new Map(nodes.map(n => [n.id, n.name]));
+    const eqTypeMap = new Map(eqTypes.map(t => [t.id, t.code]));
 
-  const rows = faults.map(f => ({
-    'Call ID': f.callId,
-    'Call Number': f.callNumber,
-    'Report Date': f.reportDate,
-    'Report Time': f.reportTime,
-    'Location': nodeMap.get(f.structureNodeId) || f.structureNodeId,
-    'Equipment Type': eqTypeMap.get(f.equipmentTypeId) || f.equipmentTypeId,
-    'Equipment Number': f.equipmentNumber,
-    'Fault Description': f.faultDescription,
-    'Priority': f.priority,
-    'Relevant State': f.relevantState,
-    'Assigned Technician': f.assignedTechnicianName || 'Unassigned',
-    'Work Done': f.workDone || '',
-    'Corrective Action': f.correctiveAction || '',
-    'Maintenance Start': f.maintenanceStart || '',
-    'Maintenance End': f.maintenanceEnd || '',
-    'TTR (Minutes)': f.ttrMinutes,
-    'Downtime (Minutes)': f.downtimeMinutes,
-    'Status': f.status,
-    'Notes': f.notes || ''
-  }));
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'ApexCMMS';
+    workbook.created = new Date();
 
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Fault History');
-  const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const worksheet = workbook.addWorksheet('Fault History');
+    worksheet.columns = [
+      { header: 'Call ID', key: 'callId', width: 16 },
+      { header: 'Call Number', key: 'callNumber', width: 16 },
+      { header: 'Report Date', key: 'reportDate', width: 14 },
+      { header: 'Report Time (24h)', key: 'reportTime', width: 16 },
+      { header: 'Location', key: 'location', width: 22 },
+      { header: 'Equipment Type', key: 'equipmentType', width: 16 },
+      { header: 'Equipment Number', key: 'equipmentNumber', width: 18 },
+      { header: 'Fault Description', key: 'faultDescription', width: 36 },
+      { header: 'Priority', key: 'priority', width: 12 },
+      { header: 'Relevant State', key: 'relevantState', width: 16 },
+      { header: 'Assigned Technician', key: 'technician', width: 24 },
+      { header: 'Work Done', key: 'workDone', width: 32 },
+      { header: 'Corrective Action', key: 'correctiveAction', width: 32 },
+      { header: 'Maintenance Start (24h)', key: 'maintenanceStart', width: 22 },
+      { header: 'Maintenance End (24h)', key: 'maintenanceEnd', width: 22 },
+      { header: 'TTR (Minutes)', key: 'ttrMinutes', width: 14 },
+      { header: 'Downtime (Minutes)', key: 'downtimeMinutes', width: 18 },
+      { header: 'Status', key: 'status', width: 14 },
+      { header: 'Notes', key: 'notes', width: 28 }
+    ];
 
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename=Fault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  res.send(buffer);
+    // Style Header Row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF0891B2' } // Cyan 600
+    };
+
+    faults.forEach(f => {
+      worksheet.addRow({
+        callId: f.callId,
+        callNumber: f.callNumber,
+        reportDate: f.reportDate,
+        reportTime: format24hTime(f.reportTime) || f.reportTime,
+        location: nodeMap.get(f.structureNodeId) || f.structureNodeId,
+        equipmentType: eqTypeMap.get(f.equipmentTypeId) || f.equipmentTypeId,
+        equipmentNumber: f.equipmentNumber,
+        faultDescription: f.faultDescription,
+        priority: f.priority,
+        relevantState: f.relevantState,
+        technician: f.assignedTechnicianName || 'Unassigned',
+        workDone: f.workDone || '',
+        correctiveAction: f.correctiveAction || '',
+        maintenanceStart: f.maintenanceStart || '',
+        maintenanceEnd: f.maintenanceEnd || '',
+        ttrMinutes: f.ttrMinutes,
+        downtimeMinutes: f.downtimeMinutes,
+        status: f.status,
+        notes: f.notes || ''
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=Fault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    res.send(Buffer.from(buffer));
+  } catch (err: any) {
+    res.status(500).json({ error: `Export failed: ${err.message}` });
+  }
 });
