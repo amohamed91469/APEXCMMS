@@ -64,6 +64,40 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return res.json();
 }
 
+export async function downloadFile(url: string, filename: string): Promise<void> {
+  const token = getStoredToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Also append token to query if not already present, ensuring both query & header auth
+  const separator = url.includes('?') ? '&' : '?';
+  const authenticatedUrl = token && !url.includes('token=') ? `${url}${separator}token=${encodeURIComponent(token)}` : url;
+
+  const res = await fetch(authenticatedUrl, { headers });
+  if (!res.ok) {
+    let errMsg = `Export failed: ${res.statusText}`;
+    try {
+      const errJson = await res.json();
+      if (errJson.error) errMsg = errJson.error;
+    } catch {
+      // ignore
+    }
+    throw new Error(errMsg);
+  }
+
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+}
+
 export const api = {
   // Auth & System Setup
   getAuthStatus: () => request<{ isInitialized: boolean; hasAdmin: boolean; settings: OrganizationSettings }>('/api/auth/status'),
@@ -248,6 +282,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data)
     }),
+  exportFaults: async (filters: Record<string, any>, filename?: string) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') params.append(k, String(v));
+    });
+    const defaultName = `Fault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    await downloadFile(`/api/data/export/faults?${params.toString()}`, filename || defaultName);
+  },
+  downloadImportErrors: async (jobId: string) => {
+    await downloadFile(`/api/data/jobs/${jobId}/errors/export`, `Import_Errors_${jobId}.xlsx`);
+  },
 
   // Users & Roles
   getUsers: () => request<{ users: User[] }>('/api/users'),

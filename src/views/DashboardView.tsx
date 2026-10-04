@@ -98,18 +98,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     }
   };
 
-  const handleExportExcel = () => {
-    const params = new URLSearchParams();
-    if (selectedNodeId) params.append('structureNodeId', selectedNodeId);
-    if (selectedEqTypeId) params.append('equipmentTypeId', selectedEqTypeId);
-    if (selectedRelevant) params.append('relevantState', selectedRelevant);
-
-    const link = document.createElement('a');
-    link.href = `/api/data/export/faults?${params.toString()}`;
-    link.setAttribute('download', `Fault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportExcel = async () => {
+    try {
+      await api.exportFaults({
+        structureNodeId: selectedNodeId || undefined,
+        equipmentTypeId: selectedEqTypeId || undefined,
+        relevantState: selectedRelevant || undefined
+      });
+      showToast('Dashboard faults exported to Excel successfully!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Excel export failed', 'error');
+    }
   };
 
   const kpis = data?.kpis || {

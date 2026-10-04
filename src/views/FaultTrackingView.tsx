@@ -46,6 +46,7 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
   const [selectedTechnicianId, setSelectedTechnicianId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   // Pagination & Sorting
   const [page, setPage] = useState(1);
@@ -215,25 +216,32 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (selectedNodeId) params.append('structureNodeId', selectedNodeId);
-              if (selectedEqTypeId) params.append('equipmentTypeId', selectedEqTypeId);
-              if (selectedStatus) params.append('status', selectedStatus);
-              if (selectedRelevant) params.append('relevantState', selectedRelevant);
-              if (startDate) params.append('startDate', startDate);
-              if (endDate) params.append('endDate', endDate);
-              const link = document.createElement('a');
-              link.href = `/api/data/export/faults?${params.toString()}`;
-              link.setAttribute('download', `Fault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
+            onClick={async () => {
+              try {
+                setIsExporting(true);
+                await api.exportFaults({
+                  search: search.trim() || undefined,
+                  structureNodeId: selectedNodeId || undefined,
+                  equipmentTypeId: selectedEqTypeId || undefined,
+                  status: selectedStatus || undefined,
+                  relevantState: selectedRelevant || undefined,
+                  priority: selectedPriority || undefined,
+                  technicianId: selectedTechnicianId || undefined,
+                  startDate: startDate || undefined,
+                  endDate: endDate || undefined
+                });
+                showToast(`Filtered fault history exported successfully (${total} records)!`, 'success');
+              } catch (err: any) {
+                showToast(err.message || 'Export failed', 'error');
+              } finally {
+                setIsExporting(false);
+              }
             }}
-            className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
+            disabled={isExporting}
+            className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Export Filtered ({total})</span>
+            <Download className={`w-3.5 h-3.5 text-emerald-400 ${isExporting ? 'animate-bounce' : ''}`} />
+            <span>{isExporting ? 'Exporting...' : `Export Filtered (${total})`}</span>
           </button>
 
           {hasPermission('faults:create') && (

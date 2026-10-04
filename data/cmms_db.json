@@ -1,29 +1,705 @@
 {
   "settings": {
     "id": "settings_default",
-    "organizationName": "Metro Transit Maintenance Corp",
-    "maintenanceDepartment": "Signaling & AFC Systems Division",
+    "organizationName": "Metro Transit Maintenance Enterprise",
+    "maintenanceDepartment": "Signaling & Automated Fare Collection (AFC)",
     "logoUrl": "",
     "timeZone": "UTC",
     "dateFormat": "YYYY-MM-DD",
     "language": "en",
     "currency": "USD",
     "downtimeCalculationRule": "report_to_restoration",
-    "isInitialized": false,
-    "createdAt": "2026-10-04T11:17:17.657Z",
-    "updatedAt": "2026-10-04T11:17:17.657Z"
+    "isInitialized": true,
+    "createdAt": "2026-10-04T11:19:13.264Z",
+    "updatedAt": "2026-10-04T11:19:29.888Z"
   },
-  "structureLevels": [],
-  "structureNodes": [],
-  "equipmentTypes": [],
-  "equipment": [],
-  "technicians": [],
-  "faultCategories": [],
-  "faultDescriptions": [],
-  "correctiveActions": [],
-  "faults": [],
-  "faultStatusHistory": [],
-  "users": [],
+  "structureLevels": [
+    {
+      "id": "level_1",
+      "internalCode": "ORG_LEVEL_1",
+      "name": "Line",
+      "pluralName": "Lines",
+      "levelOrder": 1,
+      "parentLevelId": null,
+      "isActive": true,
+      "isRequired": true,
+      "customFields": [
+        {
+          "id": "cf_line_code",
+          "name": "Line Code",
+          "key": "lineCode",
+          "type": "text",
+          "required": true
+        }
+      ],
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "level_2",
+      "internalCode": "ORG_LEVEL_2",
+      "name": "Station",
+      "pluralName": "Stations",
+      "levelOrder": 2,
+      "parentLevelId": "level_1",
+      "isActive": true,
+      "isRequired": true,
+      "customFields": [
+        {
+          "id": "cf_station_no",
+          "name": "Station Number",
+          "key": "stationNumber",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "cf_trigram",
+          "name": "Trigram",
+          "key": "trigram",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "cf_status",
+          "name": "Operational Status",
+          "key": "opStatus",
+          "type": "dropdown",
+          "options": [
+            "Open",
+            "Restricted",
+            "Closed"
+          ]
+        }
+      ],
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    }
+  ],
+  "structureNodes": [
+    {
+      "id": "node_line_1",
+      "structureLevelId": "level_1",
+      "parentNodeId": null,
+      "code": "L1",
+      "name": "Line 1",
+      "description": "North-South Metro Trunk Line",
+      "status": "active",
+      "sortOrder": 1,
+      "customValues": {
+        "lineCode": "L1-RED"
+      },
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z",
+      "createdBy": "System Administrator"
+    },
+    {
+      "id": "node_line_2",
+      "structureLevelId": "level_1",
+      "parentNodeId": null,
+      "code": "L2",
+      "name": "Line 2",
+      "description": "East-West Metro Cross Line",
+      "status": "active",
+      "sortOrder": 2,
+      "customValues": {
+        "lineCode": "L2-BLUE"
+      },
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z",
+      "createdBy": "System Administrator"
+    },
+    {
+      "id": "node_line_3",
+      "structureLevelId": "level_1",
+      "parentNodeId": null,
+      "code": "L3",
+      "name": "Line 3",
+      "description": "Airport & Suburban Express Line",
+      "status": "active",
+      "sortOrder": 3,
+      "customValues": {
+        "lineCode": "L3-GREEN"
+      },
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z",
+      "createdBy": "System Administrator"
+    },
+    {
+      "id": "node_st_adm",
+      "structureLevelId": "level_2",
+      "parentNodeId": "node_line_1",
+      "code": "ADM",
+      "name": "Station ADM (Sample)",
+      "description": "Sample Station ADM on Line 1",
+      "status": "active",
+      "sortOrder": 1,
+      "customValues": {
+        "stationNumber": "101",
+        "trigram": "ADM",
+        "opStatus": "Open"
+      },
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z",
+      "createdBy": "System Administrator"
+    },
+    {
+      "id": "node_st_abc",
+      "structureLevelId": "level_2",
+      "parentNodeId": "node_line_1",
+      "code": "ABC",
+      "name": "Station ABC (Sample)",
+      "description": "Sample Station ABC on Line 1",
+      "status": "active",
+      "sortOrder": 2,
+      "customValues": {
+        "stationNumber": "102",
+        "trigram": "ABC",
+        "opStatus": "Open"
+      },
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z",
+      "createdBy": "System Administrator"
+    },
+    {
+      "id": "node_st_xyz",
+      "structureLevelId": "level_2",
+      "parentNodeId": "node_line_2",
+      "code": "XYZ",
+      "name": "Station XYZ (Sample)",
+      "description": "Sample Station XYZ on Line 2",
+      "status": "active",
+      "sortOrder": 3,
+      "customValues": {
+        "stationNumber": "201",
+        "trigram": "XYZ",
+        "opStatus": "Open"
+      },
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z",
+      "createdBy": "System Administrator"
+    }
+  ],
+  "equipmentTypes": [
+    {
+      "id": "type_tvm",
+      "code": "TVM",
+      "name": "Ticket Vending Machine",
+      "description": "Passenger self-service ticket and card revaluation machine",
+      "status": "active",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "type_gate",
+      "code": "GATE",
+      "name": "Automatic Fare Collection Gate",
+      "description": "Passenger access control turnstile gate (entry/exit/bidirectional)",
+      "status": "active",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "type_tom",
+      "code": "TOM",
+      "name": "Ticket Office Machine",
+      "description": "Station agent counter ticketing terminal",
+      "status": "active",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "type_scu",
+      "code": "SCU",
+      "name": "Station Computer Unit",
+      "description": "Local station supervisory and network concentrator",
+      "status": "active",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    }
+  ],
+  "equipment": [
+    {
+      "id": "eq_tvm_01",
+      "equipmentNumber": "TVM-01",
+      "equipmentTypeId": "type_tvm",
+      "structureNodeId": "node_st_adm",
+      "serialNumber": "SN-TVM-8821",
+      "manufacturer": "Thales Transportation",
+      "model": "TransCity V3",
+      "installationDate": "2024-03-15",
+      "criticality": "High",
+      "status": "operational",
+      "description": "Sample Concourse TVM at Station ADM",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "eq_tvm_02",
+      "equipmentNumber": "TVM-02",
+      "equipmentTypeId": "type_tvm",
+      "structureNodeId": "node_st_adm",
+      "serialNumber": "SN-TVM-8822",
+      "manufacturer": "Thales Transportation",
+      "model": "TransCity V3",
+      "installationDate": "2024-03-15",
+      "criticality": "High",
+      "status": "operational",
+      "description": "Sample TVM #2 at Station ADM",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "eq_gate_01",
+      "equipmentNumber": "GATE-01",
+      "equipmentTypeId": "type_gate",
+      "structureNodeId": "node_st_adm",
+      "serialNumber": "SN-GT-1001",
+      "manufacturer": "Gunnebo",
+      "model": "MetroGate 500",
+      "installationDate": "2024-03-20",
+      "criticality": "Critical",
+      "status": "operational",
+      "description": "Main Entry Gate 1",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "eq_tom_01",
+      "equipmentNumber": "TOM-01",
+      "equipmentTypeId": "type_tom",
+      "structureNodeId": "node_st_abc",
+      "serialNumber": "SN-TOM-301",
+      "manufacturer": "Cubic",
+      "model": "NextGen POS",
+      "installationDate": "2024-04-01",
+      "criticality": "Medium",
+      "status": "operational",
+      "description": "Ticket Office Window 1",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "eq_scu_01",
+      "equipmentNumber": "SCU-01",
+      "equipmentTypeId": "type_scu",
+      "structureNodeId": "node_st_xyz",
+      "serialNumber": "SN-SCU-900",
+      "manufacturer": "Siemens Mobility",
+      "model": "RackServer SCU-200",
+      "installationDate": "2024-01-10",
+      "criticality": "Critical",
+      "status": "operational",
+      "description": "Station Server Unit XYZ",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    }
+  ],
+  "technicians": [
+    {
+      "id": "tech_01",
+      "code": "TECH-101",
+      "name": "Ahmed Hassan",
+      "email": "ahmed.hassan@metro-cmms.internal",
+      "phone": "+20 100 123 4567",
+      "specialization": "AFC Ticket & Coin Mechanisms",
+      "status": "active",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "tech_02",
+      "code": "TECH-102",
+      "name": "Mahmoud Farouk",
+      "email": "mahmoud.f@metro-cmms.internal",
+      "phone": "+20 100 234 5678",
+      "specialization": "Gate Optics & Flap Actuators",
+      "status": "active",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    },
+    {
+      "id": "tech_03",
+      "code": "TECH-103",
+      "name": "Sara Nour",
+      "email": "sara.nour@metro-cmms.internal",
+      "phone": "+20 100 345 6789",
+      "specialization": "SCU Networking & Power Systems",
+      "status": "active",
+      "createdAt": "2026-10-04T11:19:29.890Z",
+      "updatedAt": "2026-10-04T11:19:29.890Z"
+    }
+  ],
+  "faultCategories": [
+    {
+      "id": "cat_mech",
+      "code": "MECH",
+      "name": "Mechanical / Transport Jam",
+      "description": "Ticket path, card feeder, gate flaps",
+      "status": "active"
+    },
+    {
+      "id": "cat_elec",
+      "code": "ELEC",
+      "name": "Electrical / Power Supply",
+      "description": "PSU failure, UPS, breaker trip",
+      "status": "active"
+    },
+    {
+      "id": "cat_net",
+      "code": "NETW",
+      "name": "Network & Communication",
+      "description": "LAN timeout, SCU offline, optical link",
+      "status": "active"
+    },
+    {
+      "id": "cat_soft",
+      "code": "SOFT",
+      "name": "Software / Application Error",
+      "description": "OS crash, firmware halt, memory fault",
+      "status": "active"
+    },
+    {
+      "id": "cat_consum",
+      "code": "CONS",
+      "name": "Consumables Depleted",
+      "description": "Out of receipt rolls, smart tokens empty",
+      "status": "active"
+    }
+  ],
+  "faultDescriptions": [
+    {
+      "id": "fd_1",
+      "categoryId": "cat_consum",
+      "equipmentTypeId": "type_tvm",
+      "description": "Ticket roll empty or jammed in cutter",
+      "status": "active"
+    },
+    {
+      "id": "fd_2",
+      "categoryId": "cat_mech",
+      "equipmentTypeId": "type_gate",
+      "description": "Aisle optical sensor blocked / flap fails to open",
+      "status": "active"
+    },
+    {
+      "id": "fd_3",
+      "categoryId": "cat_elec",
+      "equipmentTypeId": "type_tvm",
+      "description": "Banknote acceptor rejection motor failure",
+      "status": "active"
+    },
+    {
+      "id": "fd_4",
+      "categoryId": "cat_net",
+      "equipmentTypeId": "type_scu",
+      "description": "SCU communication packet drop with central server",
+      "status": "active"
+    },
+    {
+      "id": "fd_5",
+      "categoryId": "cat_soft",
+      "equipmentTypeId": "type_tom",
+      "description": "Card reader firmware frozen during revaluation",
+      "status": "active"
+    }
+  ],
+  "correctiveActions": [
+    {
+      "id": "ca_1",
+      "action": "Replaced thermal printer paper roll and cleaned transport rollers",
+      "status": "active"
+    },
+    {
+      "id": "ca_2",
+      "action": "Cleaned infrared safety photoelectric sensors and recalibrated flap motor",
+      "status": "active"
+    },
+    {
+      "id": "ca_3",
+      "action": "Cleared jammed note from validator and performed self-test",
+      "status": "active"
+    },
+    {
+      "id": "ca_4",
+      "action": "Rebooted switch port and re-seated fiber optic patch cable",
+      "status": "active"
+    },
+    {
+      "id": "ca_5",
+      "action": "Restarted terminal software and verified database sync",
+      "status": "active"
+    }
+  ],
+  "faults": [
+    {
+      "id": "fault_demo_101",
+      "callId": "10025",
+      "callNumber": "C-10025",
+      "reportDate": "2026-09-15",
+      "reportTime": "10:15",
+      "structureNodeId": "node_st_adm",
+      "equipmentTypeId": "type_tvm",
+      "equipmentId": "eq_tvm_01",
+      "equipmentNumber": "TVM-01",
+      "faultCategoryId": "cat_consum",
+      "faultCategoryName": "Consumables Depleted",
+      "faultDescription": "Ticket roll problem - cutter jammed",
+      "relevantState": "Relevant",
+      "priority": "High",
+      "assignedTechnicianId": "tech_01",
+      "assignedTechnicianName": "Ahmed Hassan",
+      "workDone": "Cleared paper jam and installed fresh receipt roll",
+      "correctiveAction": "Replaced thermal printer paper roll and cleaned transport rollers",
+      "maintenanceStart": "2026-09-15T10:15:00",
+      "maintenanceEnd": "2026-09-15T10:32:00",
+      "restorationDate": "2026-09-15T10:32:00",
+      "ttrMinutes": 17,
+      "downtimeMinutes": 17,
+      "status": "Closed",
+      "notes": "Verified printing 5 test tickets successfully. Sample test record.",
+      "createdAt": "2026-09-15T10:15:00Z",
+      "createdBy": "system",
+      "createdByName": "System Administrator",
+      "updatedAt": "2026-09-15T10:35:00Z",
+      "updatedBy": "system",
+      "updatedByName": "System Administrator"
+    },
+    {
+      "id": "fault_demo_102",
+      "callId": "10026",
+      "callNumber": "C-10026",
+      "reportDate": "2026-09-15",
+      "reportTime": "23:50",
+      "structureNodeId": "node_st_adm",
+      "equipmentTypeId": "type_gate",
+      "equipmentId": "eq_gate_01",
+      "equipmentNumber": "GATE-01",
+      "faultCategoryId": "cat_mech",
+      "faultCategoryName": "Mechanical / Transport Jam",
+      "faultDescription": "Flap failed to close upon passenger egress - midnight shift",
+      "relevantState": "Relevant",
+      "priority": "Emergency",
+      "assignedTechnicianId": "tech_02",
+      "assignedTechnicianName": "Mahmoud Farouk",
+      "workDone": "Inspected pneumatic actuator and sensor alignment crossing midnight",
+      "correctiveAction": "Cleaned infrared safety photoelectric sensors and recalibrated flap motor",
+      "maintenanceStart": "2026-09-15T23:50:00",
+      "maintenanceEnd": "2026-09-16T00:20:00",
+      "restorationDate": "2026-09-16T00:20:00",
+      "ttrMinutes": 30,
+      "downtimeMinutes": 30,
+      "status": "Closed",
+      "notes": "Overnight maintenance action. Correctly calculated crossing midnight.",
+      "createdAt": "2026-09-15T23:50:00Z",
+      "createdBy": "system",
+      "createdByName": "System Administrator",
+      "updatedAt": "2026-09-16T00:22:00Z",
+      "updatedBy": "system",
+      "updatedByName": "System Administrator"
+    },
+    {
+      "id": "fault_demo_103",
+      "callId": "10027",
+      "callNumber": "C-10027",
+      "reportDate": "2026-09-16",
+      "reportTime": "08:40",
+      "structureNodeId": "node_st_abc",
+      "equipmentTypeId": "type_tom",
+      "equipmentId": "eq_tom_01",
+      "equipmentNumber": "TOM-01",
+      "faultCategoryId": "cat_soft",
+      "faultCategoryName": "Software / Application Error",
+      "faultDescription": "Card reader firmware frozen during morning rush",
+      "relevantState": "Relevant",
+      "priority": "High",
+      "assignedTechnicianId": "tech_01",
+      "assignedTechnicianName": "Ahmed Hassan",
+      "workDone": "Power-cycled station reader unit and verified central synchronization",
+      "correctiveAction": "Restarted terminal software and verified database sync",
+      "maintenanceStart": "2026-09-16T08:50:00",
+      "maintenanceEnd": "2026-09-16T09:05:00",
+      "restorationDate": "2026-09-16T09:05:00",
+      "ttrMinutes": 15,
+      "downtimeMinutes": 25,
+      "status": "Resolved",
+      "notes": "Ticket office supervisor confirmed normal passenger handling.",
+      "createdAt": "2026-09-16T08:40:00Z",
+      "createdBy": "system",
+      "createdByName": "System Administrator",
+      "updatedAt": "2026-09-16T09:06:00Z",
+      "updatedBy": "system",
+      "updatedByName": "System Administrator"
+    },
+    {
+      "id": "fault_demo_104",
+      "callId": "10028",
+      "callNumber": "C-10028",
+      "reportDate": "2026-09-16",
+      "reportTime": "14:20",
+      "structureNodeId": "node_st_xyz",
+      "equipmentTypeId": "type_tvm",
+      "equipmentId": null,
+      "equipmentNumber": "TVM-03",
+      "faultCategoryId": "cat_elec",
+      "faultCategoryName": "Electrical / Power Supply",
+      "faultDescription": "Coin acceptor sensor dirty; occasional refund rejection",
+      "relevantState": "Non-Relevant",
+      "priority": "Low",
+      "assignedTechnicianId": "tech_03",
+      "assignedTechnicianName": "Sara Nour",
+      "workDone": "Routine sensor cleaning during non-peak hours",
+      "correctiveAction": "Cleaned coin optics with isopropyl alcohol",
+      "maintenanceStart": "2026-09-16T14:30:00",
+      "maintenanceEnd": "2026-09-16T14:42:00",
+      "restorationDate": "2026-09-16T14:42:00",
+      "ttrMinutes": 12,
+      "downtimeMinutes": 22,
+      "status": "Closed",
+      "notes": "Marked Non-Relevant as machine was never out of revenue service.",
+      "createdAt": "2026-09-16T14:20:00Z",
+      "createdBy": "system",
+      "createdByName": "System Administrator",
+      "updatedAt": "2026-09-16T14:45:00Z",
+      "updatedBy": "system",
+      "updatedByName": "System Administrator"
+    },
+    {
+      "id": "fault_demo_105",
+      "callId": "10029",
+      "callNumber": "C-10029",
+      "reportDate": "2026-09-17",
+      "reportTime": "11:10",
+      "structureNodeId": "node_st_adm",
+      "equipmentTypeId": "type_scu",
+      "equipmentId": "eq_scu_01",
+      "equipmentNumber": "SCU-01",
+      "faultCategoryId": "cat_net",
+      "faultCategoryName": "Network & Communication",
+      "faultDescription": "Intermittent optical packet loss on station ring port 2",
+      "relevantState": "Under Review",
+      "priority": "Medium",
+      "assignedTechnicianId": "tech_03",
+      "assignedTechnicianName": "Sara Nour",
+      "workDone": "Monitoring packet error counters with OTDR tool",
+      "correctiveAction": "",
+      "maintenanceStart": "2026-09-17T11:30:00",
+      "maintenanceEnd": null,
+      "restorationDate": null,
+      "ttrMinutes": 0,
+      "downtimeMinutes": 0,
+      "status": "In Progress",
+      "waitingReason": "",
+      "notes": "Fiber patch cord replacement may be required during engineering night hours.",
+      "createdAt": "2026-09-17T11:10:00Z",
+      "createdBy": "system",
+      "createdByName": "System Administrator",
+      "updatedAt": "2026-09-17T11:35:00Z",
+      "updatedBy": "system",
+      "updatedByName": "System Administrator"
+    }
+  ],
+  "faultStatusHistory": [
+    {
+      "id": "hist_demo_1",
+      "faultId": "fault_demo_101",
+      "previousStatus": "New",
+      "newStatus": "Assigned",
+      "changedBy": "system",
+      "changedByName": "System Administrator",
+      "changedAt": "2026-09-15T10:15:30Z",
+      "notes": "Assigned to Ahmed Hassan"
+    },
+    {
+      "id": "hist_demo_2",
+      "faultId": "fault_demo_101",
+      "previousStatus": "Assigned",
+      "newStatus": "Resolved",
+      "changedBy": "tech_01",
+      "changedByName": "Ahmed Hassan",
+      "changedAt": "2026-09-15T10:32:00Z",
+      "notes": "Paper roll replaced"
+    },
+    {
+      "id": "hist_demo_3",
+      "faultId": "fault_demo_101",
+      "previousStatus": "Resolved",
+      "newStatus": "Closed",
+      "changedBy": "system",
+      "changedByName": "System Administrator",
+      "changedAt": "2026-09-15T10:35:00Z",
+      "notes": "Verified by station supervisor"
+    }
+  ],
+  "users": [
+    {
+      "id": "user_demo_manager",
+      "username": "manager",
+      "fullName": "Omar Tarek (Maintenance Manager)",
+      "email": "manager@metro-cmms.internal",
+      "roleId": "role_manager",
+      "status": "active",
+      "passwordHash": "$2b$10$nLKGPzGf7ss8gbvq.44BOuYlxYI8IMAjXKj5xnghRgOaOhdvbfYNy",
+      "createdAt": "2026-10-04T11:19:30.003Z",
+      "updatedAt": "2026-10-04T11:24:08.574Z",
+      "createdBy": "system",
+      "updatedBy": "user_demo_manager",
+      "lastLogin": "2026-10-04T11:24:08.573Z"
+    },
+    {
+      "id": "user_demo_supervisor",
+      "username": "supervisor",
+      "fullName": "Khaled Zaki (Maintenance Supervisor)",
+      "email": "supervisor@metro-cmms.internal",
+      "roleId": "role_supervisor",
+      "status": "active",
+      "passwordHash": "$2b$10$nLKGPzGf7ss8gbvq.44BOuYlxYI8IMAjXKj5xnghRgOaOhdvbfYNy",
+      "createdAt": "2026-10-04T11:19:30.003Z",
+      "updatedAt": "2026-10-04T11:19:30.003Z",
+      "createdBy": "system",
+      "updatedBy": "system"
+    },
+    {
+      "id": "user_demo_tech",
+      "username": "technician",
+      "fullName": "Ahmed Hassan (Technician)",
+      "email": "tech@metro-cmms.internal",
+      "roleId": "role_technician",
+      "technicianId": "tech_01",
+      "status": "active",
+      "passwordHash": "$2b$10$nLKGPzGf7ss8gbvq.44BOuYlxYI8IMAjXKj5xnghRgOaOhdvbfYNy",
+      "createdAt": "2026-10-04T11:19:30.003Z",
+      "updatedAt": "2026-10-04T11:19:30.003Z",
+      "createdBy": "system",
+      "updatedBy": "system"
+    },
+    {
+      "id": "user_demo_analyst",
+      "username": "analyst",
+      "fullName": "Dina Samir (Operations Analyst)",
+      "email": "analyst@metro-cmms.internal",
+      "roleId": "role_analyst",
+      "status": "active",
+      "passwordHash": "$2b$10$nLKGPzGf7ss8gbvq.44BOuYlxYI8IMAjXKj5xnghRgOaOhdvbfYNy",
+      "createdAt": "2026-10-04T11:19:30.003Z",
+      "updatedAt": "2026-10-04T11:19:30.003Z",
+      "createdBy": "system",
+      "updatedBy": "system"
+    },
+    {
+      "id": "user_1791112770109_5y68",
+      "username": "admin",
+      "fullName": "System Administrator",
+      "email": "admin@metro-transit.internal",
+      "roleId": "role_admin",
+      "status": "active",
+      "passwordHash": "$2b$10$idJ.T7z.BIhAbd6oZhbBhuHcWIsocH.A4ZJXLm7N4SmoaTDcZd2jm",
+      "createdAt": "2026-10-04T11:19:30.109Z",
+      "updatedAt": "2026-10-04T11:19:47.883Z",
+      "createdBy": "setup_wizard",
+      "updatedBy": "user_1791112770109_5y68",
+      "lastLogin": "2026-10-04T11:19:47.882Z"
+    }
+  ],
   "roles": [
     {
       "id": "role_admin",
@@ -118,8 +794,95 @@
   ],
   "auditLogs": [
     {
-      "id": "audit_1791112637657_1n7x2",
-      "timestamp": "2026-10-04T11:17:17.657Z",
+      "id": "audit_1791113048574_vyyjj",
+      "timestamp": "2026-10-04T11:24:08.574Z",
+      "user": "Omar Tarek (Maintenance Manager)",
+      "userName": "Omar Tarek (Maintenance Manager)",
+      "action": "UPDATE_USER",
+      "module": "Administration",
+      "entity": "User",
+      "entityId": "user_demo_manager",
+      "oldValue": "manager (role_manager) - status: active",
+      "newValue": "manager (role_manager) - status: active",
+      "details": "Updated user profile/status for manager"
+    },
+    {
+      "id": "audit_1791112958717_5xqcy",
+      "timestamp": "2026-10-04T11:22:38.717Z",
+      "user": "Omar Tarek (Maintenance Manager)",
+      "userName": "Omar Tarek (Maintenance Manager)",
+      "action": "UPDATE_USER",
+      "module": "Administration",
+      "entity": "User",
+      "entityId": "user_demo_manager",
+      "oldValue": "manager (role_manager) - status: active",
+      "newValue": "manager (role_manager) - status: active",
+      "details": "Updated user profile/status for manager"
+    },
+    {
+      "id": "audit_1791112787883_wuro1",
+      "timestamp": "2026-10-04T11:19:47.883Z",
+      "user": "System Administrator",
+      "userName": "System Administrator",
+      "action": "UPDATE_USER",
+      "module": "Administration",
+      "entity": "User",
+      "entityId": "user_1791112770109_5y68",
+      "oldValue": "admin (role_admin) - status: active",
+      "newValue": "admin (role_admin) - status: active",
+      "details": "Updated user profile/status for admin"
+    },
+    {
+      "id": "audit_1791112770113_g3bjb",
+      "timestamp": "2026-10-04T11:19:30.113Z",
+      "user": "admin",
+      "userName": "System Administrator",
+      "action": "SYSTEM_INITIALIZATION",
+      "module": "Administration",
+      "entity": "System",
+      "entityId": "root",
+      "newValue": "INITIALIZED",
+      "details": "Initial setup completed. First administrator account created for admin."
+    },
+    {
+      "id": "audit_1791112770109_56ilj",
+      "timestamp": "2026-10-04T11:19:30.109Z",
+      "user": "First-Run Setup Wizard",
+      "userName": "First-Run Setup Wizard",
+      "action": "CREATE_USER",
+      "module": "Administration",
+      "entity": "User",
+      "entityId": "user_1791112770109_5y68",
+      "newValue": "admin (System Administrator)",
+      "details": "Created user admin with role role_admin"
+    },
+    {
+      "id": "audit_1791112769889_k58v6",
+      "timestamp": "2026-10-04T11:19:29.889Z",
+      "user": "System Administrator",
+      "userName": "System Administrator",
+      "action": "UPDATE_STRUCTURE_LEVELS",
+      "module": "Administration",
+      "entity": "StructureLevel",
+      "entityId": "all",
+      "oldValue": "",
+      "newValue": "Line (ORG_LEVEL_1) -> Station (ORG_LEVEL_2)",
+      "details": "Reconfigured hierarchy terminology: Line (ORG_LEVEL_1) -> Station (ORG_LEVEL_2)"
+    },
+    {
+      "id": "audit_1791112769888_2b0pg",
+      "timestamp": "2026-10-04T11:19:29.888Z",
+      "user": "System Administrator",
+      "userName": "System Administrator",
+      "action": "UPDATE_SETTINGS",
+      "module": "Administration",
+      "entity": "OrganizationSettings",
+      "entityId": "settings_default",
+      "details": "Updated organization settings"
+    },
+    {
+      "id": "audit_1791112753264_zi7ai",
+      "timestamp": "2026-10-04T11:19:13.264Z",
       "user": "System Installation Reset",
       "userName": "System Installation Reset",
       "action": "SYSTEM_FACTORY_RESET",

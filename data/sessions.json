@@ -1,1 +1,17 @@
-{}
+{
+  "1a6f8ebdeda9b4c405ab041df0bab82b9d712accf98258bc4032994388ce8592": {
+    "userId": "user_1791112770109_5y68",
+    "createdAt": 1791112787884,
+    "expiresAt": 1792322387884
+  },
+  "7bc28477a26a2b443d93932534e0707e882753aa6ee9ebdb0e5e2841584b0e3c": {
+    "userId": "user_demo_manager",
+    "createdAt": 1791112958718,
+    "expiresAt": 1792322558718
+  },
+  "faf018de67ddaadf09ead04277d63eb86d458de7926baabc68514a85b17e841f": {
+    "userId": "user_demo_manager",
+    "createdAt": 1791113048575,
+    "expiresAt": 1792322648575
+  }
+}

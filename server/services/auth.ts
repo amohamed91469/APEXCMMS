@@ -107,7 +107,10 @@ export function getUserFromToken(token?: string): (User & { permissions: string[
 
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
+  let token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
+  if (!token && req.query && typeof req.query.token === 'string') {
+    token = req.query.token;
+  }
 
   const user = getUserFromToken(token);
   if (!user) {
