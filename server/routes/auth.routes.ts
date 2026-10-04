@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { store } from '../db/store.ts';
-import { createSession, destroySession, requireAuth, AuthenticatedRequest } from '../services/auth.ts';
+import { createSession, destroySession, destroyAllSessions, requireAuth, AuthenticatedRequest } from '../services/auth.ts';
 
 export const authRouter = Router();
 
@@ -10,7 +10,7 @@ authRouter.get('/status', (req, res) => {
   const users = store.getUsers();
   const hasAdmin = users.some(u => u.roleId === 'role_admin' && u.status === 'active');
   const settings = store.getSettings();
-  const isInitialized = hasAdmin || Boolean(settings.isInitialized);
+  const isInitialized = hasAdmin && Boolean(settings.isInitialized);
 
   res.json({
     isInitialized,
@@ -20,6 +20,22 @@ authRouter.get('/status', (req, res) => {
       isInitialized
     }
   });
+});
+
+// Emergency / Pre-Auth System Reset & Installation Restart
+authRouter.post('/reset-system', (req, res) => {
+  const { confirmation } = req.body;
+  if (confirmation !== 'RESET') {
+    return res.status(400).json({ error: 'Confirmation keyword "RESET" is required to wipe all system data.' });
+  }
+
+  try {
+    store.factoryReset('System Installation Reset');
+    destroyAllSessions();
+    res.json({ success: true, message: 'System has been completely reset. All data cleared. Starting installation wizard.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to reset system' });
+  }
 });
 
 // First-run installation wizard endpoint

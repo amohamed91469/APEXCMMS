@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { store } from '../db/store.ts';
-import { requireAuth, requirePermission, AuthenticatedRequest } from '../services/auth.ts';
+import { requireAuth, requirePermission, AuthenticatedRequest, destroyAllSessions } from '../services/auth.ts';
 
 export const settingsRouter = Router();
 
@@ -49,5 +49,17 @@ settingsRouter.post('/seed-sample-data', requirePermission('settings:manage'), (
     res.json({ message: 'Metro AFC demonstration dataset has been loaded.' });
   } catch (err: any) {
     res.status(400).json({ error: err.message || 'Failed to seed sample data' });
+  }
+});
+
+// Full System Factory Reset & Data Purge (Clears all records, users, and hierarchy, restarts installation wizard)
+settingsRouter.post('/factory-reset', requirePermission('settings:manage'), (req: AuthenticatedRequest, res) => {
+  try {
+    const actorName = req.user ? `${req.user.fullName} (${req.user.username})` : 'Administrator';
+    store.factoryReset(actorName);
+    destroyAllSessions();
+    res.json({ success: true, message: 'System has been completely reset. All data cleared. Installation wizard will now launch.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to factory reset system' });
   }
 });

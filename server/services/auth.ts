@@ -72,6 +72,11 @@ export function destroySession(token: string) {
   saveSessions();
 }
 
+export function destroyAllSessions() {
+  sessions.clear();
+  saveSessions();
+}
+
 export function getUserFromToken(token?: string): (User & { permissions: string[] }) | null {
   if (!token) return null;
   const session = sessions.get(token);

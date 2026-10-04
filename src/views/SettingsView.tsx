@@ -14,7 +14,7 @@ import { api } from '../api/client.ts';
 import { useCMMS } from '../context/CMMSContext.tsx';
 
 export const SettingsView: React.FC = () => {
-  const { settings, refreshMasterData, refreshAuth, showToast } = useCMMS();
+  const { settings, refreshMasterData, refreshAuth, factoryResetAndRestartWizard, showToast } = useCMMS();
 
   const [orgName, setOrgName] = useState(settings?.organizationName || '');
   const [department, setDepartment] = useState(settings?.maintenanceDepartment || '');
@@ -27,6 +27,25 @@ export const SettingsView: React.FC = () => {
   const [isClearing, setIsClearing] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+
+  // Full factory reset state
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [resetInput, setResetInput] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleFactoryReset = async () => {
+    if (resetInput !== 'RESET') {
+      showToast('Please type RESET exactly to confirm factory reset', 'warning');
+      return;
+    }
+    try {
+      setIsResetting(true);
+      await factoryResetAndRestartWizard();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to factory reset', 'error');
+      setIsResetting(false);
+    }
+  };
 
   const handleSaveSettings = async () => {
     try {
@@ -213,6 +232,106 @@ export const SettingsView: React.FC = () => {
                 className="px-4 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold"
               >
                 {isClearing ? 'Clearing...' : 'Confirm Purge'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Danger Zone: Full Factory Reset & Installation Wizard */}
+      <div className="p-6 rounded-2xl bg-red-950/20 border border-red-900/60 space-y-4 shadow-xl">
+        <div className="flex items-center gap-2 border-b border-red-900/50 pb-3">
+          <ShieldAlert className="w-5 h-5 text-red-500" />
+          <div>
+            <h2 className="text-sm font-bold text-red-400 uppercase tracking-wider">Danger Zone: System Factory Reset</h2>
+            <p className="text-[11px] text-slate-400">Wipe all application data, users, and hierarchy, and restart the First-Run Installation Wizard</p>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-red-950/40 border border-red-850/60 text-xs text-red-200/90 space-y-2">
+          <p className="font-semibold text-red-300">
+            Warning: This action is permanent and completely irreversible!
+          </p>
+          <p className="text-slate-300 leading-relaxed">
+            Performing a factory reset will erase:
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-slate-300 pl-1 text-[11px]">
+            <li>All logged faults, status histories, maintenance work notes, and TTR/downtime statistics</li>
+            <li>All registered equipment and organizational hierarchy nodes &amp; custom field schemas</li>
+            <li>All master data (equipment types, fault categories, failure codes, and corrective actions)</li>
+            <li>All user accounts, credentials, and custom roles</li>
+            <li>All historical audit log entries, import jobs, and error archives</li>
+          </ul>
+          <p className="text-slate-300 text-[11px]">
+            Once completed, the system will return to an uninitialized state and automatically present the <strong>First-Run Installation Wizard</strong> so you can configure a brand-new organization or fresh hierarchy from scratch.
+          </p>
+        </div>
+
+        {!confirmResetOpen ? (
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                setConfirmResetOpen(true);
+                setResetInput('');
+              }}
+              className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-red-600/30 transition-all hover:scale-[1.01]"
+            >
+              <Trash2 className="w-4 h-4 text-white" />
+              <span>Reset All Data &amp; Start Installation Wizard</span>
+            </button>
+          </div>
+        ) : (
+          <div className="p-4 rounded-xl bg-red-950/70 border-2 border-red-600 space-y-3 text-xs animate-in fade-in duration-200">
+            <div className="flex items-start gap-2.5 text-red-200">
+              <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-bold text-red-200 text-sm">Confirm Full Factory Reset</span>
+                <p className="text-slate-300">
+                  To confirm wiping the entire database and launching the setup wizard, type <strong className="text-white bg-red-900/60 px-1.5 py-0.5 rounded font-mono">RESET</strong> below:
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-1">
+              <input
+                type="text"
+                value={resetInput}
+                onChange={e => setResetInput(e.target.value.toUpperCase())}
+                placeholder="Type RESET here"
+                disabled={isResetting}
+                className="w-full sm:w-64 px-3 py-2 rounded-lg bg-slate-900 border border-red-700 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-red-400"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmResetOpen(false);
+                  setResetInput('');
+                }}
+                disabled={isResetting}
+                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleFactoryReset}
+                disabled={resetInput !== 'RESET' || isResetting}
+                className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-red-600/30 transition-all"
+              >
+                {isResetting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    <span>Resetting Database &amp; Reloading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 text-white" />
+                    <span>Confirm &amp; Launch Installation Wizard</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

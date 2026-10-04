@@ -248,7 +248,9 @@ export class CMMSStore {
           modules: parsed.modules?.length ? parsed.modules : defaultState.modules,
           dashboardWidgets: parsed.dashboardWidgets?.length ? parsed.dashboardWidgets : defaultState.dashboardWidgets
         };
-        this.ensureDemonstrationUsers(merged);
+        if (merged.settings?.isInitialized && merged.users && merged.users.length > 0) {
+          this.ensureDemonstrationUsers(merged);
+        }
         return merged;
       } catch (e) {
         console.error('Failed to load database from file, initializing fresh state', e);
@@ -256,12 +258,14 @@ export class CMMSStore {
     }
 
     const state = this.getDefaultState();
-    this.ensureDemonstrationUsers(state);
     this.persistSync(state);
     return state;
   }
 
   private ensureDemonstrationUsers(state: DatabaseSchema) {
+    if (!state.settings?.isInitialized && (!state.users || state.users.length === 0)) {
+      return;
+    }
     if (!state.users) state.users = [];
     const salt = bcrypt.genSaltSync(10);
     const defaultPasswordHash = bcrypt.hashSync('password123', salt);
@@ -1306,6 +1310,39 @@ export class CMMSStore {
     this.db.dashboardWidgets = widgets;
     this.save();
     return this.getDashboardWidgets();
+  }
+
+  // --- Complete System Factory Reset & Data Purge ---
+  public factoryReset(actorName: string = 'System Reset') {
+    const defaultState = this.getDefaultState();
+    defaultState.settings.isInitialized = false;
+    defaultState.users = [];
+    defaultState.structureLevels = [];
+    defaultState.structureNodes = [];
+    defaultState.equipmentTypes = [];
+    defaultState.equipment = [];
+    defaultState.technicians = [];
+    defaultState.faultCategories = [];
+    defaultState.faultDescriptions = [];
+    defaultState.correctiveActions = [];
+    defaultState.faults = [];
+    defaultState.faultStatusHistory = [];
+    defaultState.auditLogs = [];
+    defaultState.importJobs = [];
+    defaultState.importErrors = [];
+    defaultState.importMappingTemplates = [];
+
+    this.db = defaultState;
+    this.logAudit({
+      user: actorName,
+      userName: actorName,
+      action: 'SYSTEM_FACTORY_RESET',
+      module: 'Administration',
+      entity: 'System',
+      entityId: 'all',
+      details: 'All system data, records, organizational structure, master data, and user accounts completely erased. System reset to installation wizard state.'
+    });
+    this.persistSync(this.db);
   }
 
   // --- Demonstration / Sample Data Management ---

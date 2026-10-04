@@ -10,17 +10,36 @@ import {
   Plus,
   Trash2,
   AlertCircle,
-  LogIn
+  LogIn,
+  RotateCcw,
+  AlertTriangle
 } from 'lucide-react';
 import { api, setStoredToken } from '../api/client.ts';
 import { useCMMS } from '../context/CMMSContext.tsx';
 import { StructureLevel } from '../types/cmms.ts';
 
 export const FirstRunWizard: React.FC = () => {
-  const { refreshAuth, setIsInitialized, showToast } = useCMMS();
+  const { refreshAuth, setIsInitialized, factoryResetAndRestartWizard, showToast } = useCMMS();
   const [step, setStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isResetting, setIsResetting] = useState<boolean>(false);
+  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleResetAllData = async () => {
+    try {
+      setIsResetting(true);
+      await factoryResetAndRestartWizard();
+      setError(null);
+      setStep(1);
+      setShowResetConfirm(false);
+      showToast('Database wiped clean. Starting fresh installation setup.', 'info');
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset system');
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Step 1: Organization
   const [orgData, setOrgData] = useState({
@@ -169,6 +188,15 @@ export const FirstRunWizard: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 transition-colors"
+                title="Wipe database and restart installation wizard"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset System</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   setIsInitialized(true);
                   refreshAuth();
@@ -227,17 +255,74 @@ export const FirstRunWizard: React.FC = () => {
                   <div className="text-red-200 text-xs mt-0.5">{error}</div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsInitialized(true);
-                  refreshAuth();
-                }}
-                className="shrink-0 px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition-colors"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Go to Sign In Screen</span>
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(true)}
+                  className="px-3 py-1.5 rounded-lg bg-red-900/80 hover:bg-red-800 text-red-100 text-xs font-semibold flex items-center gap-1.5 shadow transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Wipe &amp; Start Over</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsInitialized(true);
+                    refreshAuth();
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition-colors"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Reset Confirmation Modal */}
+          {showResetConfirm && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="w-full max-w-md bg-slate-900 border-2 border-red-600 rounded-2xl p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-start gap-3 text-red-400">
+                  <div className="p-2.5 rounded-xl bg-red-950/80 border border-red-800">
+                    <AlertTriangle className="w-6 h-6 text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Reset All System Data</h3>
+                    <p className="text-xs text-red-300 mt-0.5">Wipe all records, users, and hierarchy</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Are you sure you want to clear all data in the system? This will delete all registered users, organizational nodes, equipment, and records, and reset the wizard to Step 1.
+                </p>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirm(false)}
+                    disabled={isResetting}
+                    className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetAllData}
+                    disabled={isResetting}
+                    className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-red-600/30 transition-all"
+                  >
+                    {isResetting ? (
+                      <span>Resetting...</span>
+                    ) : (
+                      <>
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Confirm Reset &amp; Restart</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

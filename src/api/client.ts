@@ -291,6 +291,11 @@ export const api = {
   }),
   clearSampleData: () => request<{ message: string }>('/api/settings/clear-sample-data', { method: 'POST' }),
   seedSampleData: () => request<{ message: string }>('/api/settings/seed-sample-data', { method: 'POST' }),
+  factoryReset: () => request<{ success: boolean; message: string }>('/api/settings/factory-reset', { method: 'POST' }),
+  resetSystem: (confirmation: string = 'RESET') => request<{ success: boolean; message: string }>('/api/auth/reset-system', {
+    method: 'POST',
+    body: JSON.stringify({ confirmation })
+  }),
 
   // Modules
   getModules: () => request<{ modules: ModuleDefinition[] }>('/api/modules'),

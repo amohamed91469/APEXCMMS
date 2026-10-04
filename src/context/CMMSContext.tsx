@@ -28,6 +28,7 @@ interface CMMSContextType {
   switchUser: (username: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
+  factoryResetAndRestartWizard: () => Promise<void>;
 
   // Organization & Hierarchy
   settings: OrganizationSettings | null;
@@ -170,6 +171,27 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     showToast('You have been logged out.', 'info');
   };
 
+  const factoryResetAndRestartWizard = async () => {
+    try {
+      setIsLoading(true);
+      await api.resetSystem('RESET');
+      removeStoredToken();
+      setUser(null);
+      setLevels([]);
+      setNodes([]);
+      setEquipmentTypes([]);
+      setTechnicians([]);
+      setCategories([]);
+      setAllUsers([]);
+      setIsInitialized(false);
+      showToast('All system data cleared. Launching First-Run Installation Wizard.', 'info');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to reset system', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const hasPermission = useCallback((perm: string): boolean => {
     if (!user) return false;
     if (user.roleId === 'role_admin' || user.permissions?.includes('*')) return true;
@@ -216,6 +238,7 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchUser,
         logout,
         refreshAuth,
+        factoryResetAndRestartWizard,
         settings,
         levels,
         nodes,

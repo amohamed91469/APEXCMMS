@@ -9,9 +9,9 @@
     "language": "en",
     "currency": "USD",
     "downtimeCalculationRule": "report_to_restoration",
-    "isInitialized": true,
-    "createdAt": "2026-10-04T08:20:37.673Z",
-    "updatedAt": "2026-10-04T08:20:37.673Z"
+    "isInitialized": false,
+    "createdAt": "2026-10-04T11:17:17.657Z",
+    "updatedAt": "2026-10-04T11:17:17.657Z"
   },
   "structureLevels": [],
   "structureNodes": [],
@@ -23,74 +23,7 @@
   "correctiveActions": [],
   "faults": [],
   "faultStatusHistory": [],
-  "users": [
-    {
-      "id": "user_demo_admin",
-      "username": "admin",
-      "fullName": "System Administrator",
-      "email": "admin@metro-cmms.internal",
-      "roleId": "role_admin",
-      "status": "active",
-      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
-      "createdAt": "2026-10-04T08:20:37.781Z",
-      "updatedAt": "2026-10-04T09:15:59.404Z",
-      "createdBy": "system",
-      "updatedBy": "user_demo_admin",
-      "lastLogin": "2026-10-04T09:15:59.403Z"
-    },
-    {
-      "id": "user_demo_manager",
-      "username": "manager",
-      "fullName": "Omar Tarek (Maintenance Manager)",
-      "email": "manager@metro-cmms.internal",
-      "roleId": "role_manager",
-      "status": "active",
-      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
-      "createdAt": "2026-10-04T08:20:37.781Z",
-      "updatedAt": "2026-10-04T08:20:37.781Z",
-      "createdBy": "system",
-      "updatedBy": "system"
-    },
-    {
-      "id": "user_demo_supervisor",
-      "username": "supervisor",
-      "fullName": "Khaled Zaki (Maintenance Supervisor)",
-      "email": "supervisor@metro-cmms.internal",
-      "roleId": "role_supervisor",
-      "status": "active",
-      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
-      "createdAt": "2026-10-04T08:20:37.781Z",
-      "updatedAt": "2026-10-04T08:20:37.781Z",
-      "createdBy": "system",
-      "updatedBy": "system"
-    },
-    {
-      "id": "user_demo_tech",
-      "username": "technician",
-      "fullName": "Ahmed Hassan (Field Technician)",
-      "email": "tech@metro-cmms.internal",
-      "roleId": "role_technician",
-      "status": "active",
-      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
-      "createdAt": "2026-10-04T08:20:37.781Z",
-      "updatedAt": "2026-10-04T08:20:37.781Z",
-      "createdBy": "system",
-      "updatedBy": "system"
-    },
-    {
-      "id": "user_demo_analyst",
-      "username": "analyst",
-      "fullName": "Dina Samir (Operations Analyst)",
-      "email": "analyst@metro-cmms.internal",
-      "roleId": "role_analyst",
-      "status": "active",
-      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
-      "createdAt": "2026-10-04T08:20:37.781Z",
-      "updatedAt": "2026-10-04T08:20:37.781Z",
-      "createdBy": "system",
-      "updatedBy": "system"
-    }
-  ],
+  "users": [],
   "roles": [
     {
       "id": "role_admin",
@@ -185,17 +118,15 @@
   ],
   "auditLogs": [
     {
-      "id": "audit_1791105359404_dozof",
-      "timestamp": "2026-10-04T09:15:59.404Z",
-      "user": "System Administrator",
-      "userName": "System Administrator",
-      "action": "UPDATE_USER",
+      "id": "audit_1791112637657_1n7x2",
+      "timestamp": "2026-10-04T11:17:17.657Z",
+      "user": "System Installation Reset",
+      "userName": "System Installation Reset",
+      "action": "SYSTEM_FACTORY_RESET",
       "module": "Administration",
-      "entity": "User",
-      "entityId": "user_demo_admin",
-      "oldValue": "admin (role_admin) - status: active",
-      "newValue": "admin (role_admin) - status: active",
-      "details": "Updated user profile/status for admin"
+      "entity": "System",
+      "entityId": "all",
+      "details": "All system data, records, organizational structure, master data, and user accounts completely erased. System reset to installation wizard state."
     }
   ],
   "modules": [
