@@ -1,0 +1,347 @@
+{
+  "settings": {
+    "id": "settings_default",
+    "organizationName": "Metro Transit Maintenance Corp",
+    "maintenanceDepartment": "Signaling & AFC Systems Division",
+    "logoUrl": "",
+    "timeZone": "UTC",
+    "dateFormat": "YYYY-MM-DD",
+    "language": "en",
+    "currency": "USD",
+    "downtimeCalculationRule": "report_to_restoration",
+    "isInitialized": true,
+    "createdAt": "2026-10-04T08:20:37.673Z",
+    "updatedAt": "2026-10-04T08:20:37.673Z"
+  },
+  "structureLevels": [],
+  "structureNodes": [],
+  "equipmentTypes": [],
+  "equipment": [],
+  "technicians": [],
+  "faultCategories": [],
+  "faultDescriptions": [],
+  "correctiveActions": [],
+  "faults": [],
+  "faultStatusHistory": [],
+  "users": [
+    {
+      "id": "user_demo_admin",
+      "username": "admin",
+      "fullName": "System Administrator",
+      "email": "admin@metro-cmms.internal",
+      "roleId": "role_admin",
+      "status": "active",
+      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
+      "createdAt": "2026-10-04T08:20:37.781Z",
+      "updatedAt": "2026-10-04T09:15:59.404Z",
+      "createdBy": "system",
+      "updatedBy": "user_demo_admin",
+      "lastLogin": "2026-10-04T09:15:59.403Z"
+    },
+    {
+      "id": "user_demo_manager",
+      "username": "manager",
+      "fullName": "Omar Tarek (Maintenance Manager)",
+      "email": "manager@metro-cmms.internal",
+      "roleId": "role_manager",
+      "status": "active",
+      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
+      "createdAt": "2026-10-04T08:20:37.781Z",
+      "updatedAt": "2026-10-04T08:20:37.781Z",
+      "createdBy": "system",
+      "updatedBy": "system"
+    },
+    {
+      "id": "user_demo_supervisor",
+      "username": "supervisor",
+      "fullName": "Khaled Zaki (Maintenance Supervisor)",
+      "email": "supervisor@metro-cmms.internal",
+      "roleId": "role_supervisor",
+      "status": "active",
+      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
+      "createdAt": "2026-10-04T08:20:37.781Z",
+      "updatedAt": "2026-10-04T08:20:37.781Z",
+      "createdBy": "system",
+      "updatedBy": "system"
+    },
+    {
+      "id": "user_demo_tech",
+      "username": "technician",
+      "fullName": "Ahmed Hassan (Field Technician)",
+      "email": "tech@metro-cmms.internal",
+      "roleId": "role_technician",
+      "status": "active",
+      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
+      "createdAt": "2026-10-04T08:20:37.781Z",
+      "updatedAt": "2026-10-04T08:20:37.781Z",
+      "createdBy": "system",
+      "updatedBy": "system"
+    },
+    {
+      "id": "user_demo_analyst",
+      "username": "analyst",
+      "fullName": "Dina Samir (Operations Analyst)",
+      "email": "analyst@metro-cmms.internal",
+      "roleId": "role_analyst",
+      "status": "active",
+      "passwordHash": "$2b$10$eYRrKU2t7hfC4uN3fuc1/.CUuZTDtl14tCS3idMfYnxAKnL5uXCLm",
+      "createdAt": "2026-10-04T08:20:37.781Z",
+      "updatedAt": "2026-10-04T08:20:37.781Z",
+      "createdBy": "system",
+      "updatedBy": "system"
+    }
+  ],
+  "roles": [
+    {
+      "id": "role_admin",
+      "name": "Administrator",
+      "description": "Full unconstrained system access, configuration, security and user management",
+      "isSystem": true,
+      "permissions": [
+        "faults:view",
+        "faults:create",
+        "faults:edit",
+        "faults:assign",
+        "faults:resolve",
+        "faults:close",
+        "faults:reopen",
+        "equipment:view",
+        "equipment:manage",
+        "reports:view",
+        "reports:export",
+        "structure:manage",
+        "masterdata:manage",
+        "users:manage",
+        "roles:manage",
+        "audit:view",
+        "import:execute",
+        "settings:manage"
+      ]
+    },
+    {
+      "id": "role_manager",
+      "name": "Maintenance Manager",
+      "description": "Maintenance supervision, reporting, KPI analysis, master data and import/export",
+      "isSystem": true,
+      "permissions": [
+        "faults:view",
+        "faults:create",
+        "faults:edit",
+        "faults:assign",
+        "faults:resolve",
+        "faults:close",
+        "faults:reopen",
+        "equipment:view",
+        "equipment:manage",
+        "reports:view",
+        "reports:export",
+        "masterdata:manage",
+        "audit:view",
+        "import:execute"
+      ]
+    },
+    {
+      "id": "role_supervisor",
+      "name": "Maintenance Supervisor",
+      "description": "Day-to-day fault tracking, technician assignment, resolution approvals",
+      "isSystem": true,
+      "permissions": [
+        "faults:view",
+        "faults:create",
+        "faults:edit",
+        "faults:assign",
+        "faults:resolve",
+        "faults:close",
+        "equipment:view",
+        "reports:view",
+        "reports:export"
+      ]
+    },
+    {
+      "id": "role_technician",
+      "name": "Technician",
+      "description": "Assigned corrective actions, work done recording, and resolution requests",
+      "isSystem": true,
+      "permissions": [
+        "faults:view",
+        "faults:edit",
+        "faults:resolve",
+        "equipment:view"
+      ]
+    },
+    {
+      "id": "role_analyst",
+      "name": "Viewer / Analyst",
+      "description": "Read-only access to faults, equipment history, reports, and audit logs",
+      "isSystem": true,
+      "permissions": [
+        "faults:view",
+        "equipment:view",
+        "reports:view",
+        "reports:export",
+        "audit:view"
+      ]
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "audit_1791105359404_dozof",
+      "timestamp": "2026-10-04T09:15:59.404Z",
+      "user": "System Administrator",
+      "userName": "System Administrator",
+      "action": "UPDATE_USER",
+      "module": "Administration",
+      "entity": "User",
+      "entityId": "user_demo_admin",
+      "oldValue": "admin (role_admin) - status: active",
+      "newValue": "admin (role_admin) - status: active",
+      "details": "Updated user profile/status for admin"
+    }
+  ],
+  "modules": [
+    {
+      "id": "mod_fault_tracking",
+      "name": "Fault Tracking & Maintenance History",
+      "description": "Core reactive maintenance tracking, call dispatch, TTR/downtime and history",
+      "version": "1.0.0",
+      "enabled": true,
+      "isCore": true,
+      "category": "maintenance",
+      "navItems": [
+        {
+          "title": "Fault Tracking",
+          "path": "/faults",
+          "icon": "AlertTriangle",
+          "permission": "faults:view"
+        },
+        {
+          "title": "New Fault Entry",
+          "path": "/faults/new",
+          "icon": "PlusCircle",
+          "permission": "faults:create"
+        }
+      ]
+    },
+    {
+      "id": "mod_assets",
+      "name": "Asset & Equipment Register",
+      "description": "Equipment master records, asset numbering, and hierarchical structure mapping",
+      "version": "1.0.0",
+      "enabled": true,
+      "isCore": true,
+      "category": "asset",
+      "navItems": [
+        {
+          "title": "Equipment Register",
+          "path": "/equipment",
+          "icon": "Cpu",
+          "permission": "equipment:view"
+        }
+      ]
+    },
+    {
+      "id": "mod_preventive_maintenance",
+      "name": "Preventive Maintenance (PM)",
+      "description": "Scheduled PM routines, frequency plans, compliance tracking (Architecture Ready)",
+      "version": "0.1.0",
+      "enabled": false,
+      "isCore": false,
+      "category": "maintenance",
+      "navItems": [
+        {
+          "title": "PM Plans",
+          "path": "/pm/plans",
+          "icon": "Calendar",
+          "permission": "faults:view"
+        }
+      ]
+    },
+    {
+      "id": "mod_warehouse",
+      "name": "Warehouse & Spare Parts",
+      "description": "Stock control, inventory levels, spare parts consumption (Architecture Ready)",
+      "version": "0.1.0",
+      "enabled": false,
+      "isCore": false,
+      "category": "inventory",
+      "navItems": [
+        {
+          "title": "Spare Parts",
+          "path": "/warehouse/parts",
+          "icon": "Package",
+          "permission": "equipment:view"
+        }
+      ]
+    },
+    {
+      "id": "mod_workforce",
+      "name": "Workforce & Attendance",
+      "description": "Technician shifts, working hours, attendance and overtime (Architecture Ready)",
+      "version": "0.1.0",
+      "enabled": false,
+      "isCore": false,
+      "category": "workforce",
+      "navItems": [
+        {
+          "title": "Attendance",
+          "path": "/workforce/shifts",
+          "icon": "Clock",
+          "permission": "users:manage"
+        }
+      ]
+    }
+  ],
+  "importJobs": [],
+  "importErrors": [],
+  "importMappingTemplates": [],
+  "dashboardWidgets": [
+    {
+      "id": "w_kpis",
+      "title": "Operational KPIs",
+      "type": "stat",
+      "width": "full",
+      "order": 1,
+      "visible": true
+    },
+    {
+      "id": "w_trend",
+      "title": "Fault Trend Over Time",
+      "type": "chart_trend",
+      "width": "half",
+      "order": 2,
+      "visible": true
+    },
+    {
+      "id": "w_by_equip",
+      "title": "Faults by Equipment Type",
+      "type": "chart_equipment",
+      "width": "half",
+      "order": 3,
+      "visible": true
+    },
+    {
+      "id": "w_by_struct",
+      "title": "Faults by Organizational Structure",
+      "type": "chart_structure",
+      "width": "half",
+      "order": 4,
+      "visible": true
+    },
+    {
+      "id": "w_by_tech",
+      "title": "Technician Workload & Performance",
+      "type": "chart_technician",
+      "width": "half",
+      "order": 5,
+      "visible": true
+    },
+    {
+      "id": "w_recurring",
+      "title": "Top Recurring Failures",
+      "type": "recurring_table",
+      "width": "full",
+      "order": 6,
+      "visible": true
+    }
+  ]
+}

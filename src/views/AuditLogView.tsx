@@ -12,6 +12,7 @@ import {
 import { api } from '../api/client.ts';
 import { useCMMS } from '../context/CMMSContext.tsx';
 import { AuditLog } from '../types/cmms.ts';
+import { format24hDateTime } from '../utils/timeCalculations.ts';
 
 export const AuditLogView: React.FC = () => {
   const { showToast } = useCMMS();
@@ -125,7 +126,7 @@ export const AuditLogView: React.FC = () => {
                 logs.map(log => (
                   <tr key={log.id} className="hover:bg-slate-800/40">
                     <td className="py-3 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
-                      {new Date(log.timestamp).toLocaleString()}
+                      {format24hDateTime(log.timestamp)}
                     </td>
                     <td className="py-3 px-4">
                       <span className="font-semibold text-white">{log.userName || log.user}</span>

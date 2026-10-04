@@ -2,7 +2,7 @@ import { Router } from 'express';
 import ExcelJS from 'exceljs';
 import { store } from '../db/store.ts';
 import { requireAuth, requirePermission, AuthenticatedRequest } from '../services/auth.ts';
-import { calculateTTR, calculateDowntime, parseFlexibleDateTime, format24hTime } from '../../src/utils/timeCalculations.ts';
+import { calculateTTR, calculateDowntime, parseFlexibleDateTime, format24hTime, format24hDateTime } from '../../src/utils/timeCalculations.ts';
 import { Fault, ImportJob, ImportErrorItem } from '../../src/types/cmms.ts';
 
 export const importExportRouter = Router();
@@ -858,8 +858,8 @@ importExportRouter.get('/export/faults', requireAuth, requirePermission('reports
         technician: f.assignedTechnicianName || 'Unassigned',
         workDone: f.workDone || '',
         correctiveAction: f.correctiveAction || '',
-        maintenanceStart: f.maintenanceStart || '',
-        maintenanceEnd: f.maintenanceEnd || '',
+        maintenanceStart: f.maintenanceStart ? (format24hDateTime(f.maintenanceStart) || f.maintenanceStart) : '',
+        maintenanceEnd: f.maintenanceEnd ? (format24hDateTime(f.maintenanceEnd) || f.maintenanceEnd) : '',
         ttrMinutes: f.ttrMinutes,
         downtimeMinutes: f.downtimeMinutes,
         status: f.status,

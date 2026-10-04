@@ -22,6 +22,7 @@ interface CMMSContextType {
   user: (User & { permissions: string[] }) | null;
   isAuthenticated: boolean;
   isInitialized: boolean;
+  setIsInitialized: (val: boolean) => void;
   isLoading: boolean;
   login: (credentials: { username: string; password: string }) => Promise<void>;
   switchUser: (username: string) => Promise<void>;
@@ -209,6 +210,7 @@ export const CMMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isAuthenticated: !!user,
         isInitialized,
+        setIsInitialized,
         isLoading,
         login,
         switchUser,

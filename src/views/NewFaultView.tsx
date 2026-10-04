@@ -13,7 +13,15 @@ import {
 import { api } from '../api/client.ts';
 import { useCMMS } from '../context/CMMSContext.tsx';
 import { FaultStatus, RelevantState, Priority } from '../types/cmms.ts';
-import { calculateTTR, calculateDowntime, formatMinutes } from '../utils/timeCalculations.ts';
+import {
+  calculateTTR,
+  calculateDowntime,
+  formatMinutes,
+  format24hTime,
+  getCurrent24hTime,
+  getTodayDate,
+  offset24hTime
+} from '../utils/timeCalculations.ts';
 
 interface NewFaultViewProps {
   onNavigate: (tab: string, meta?: any) => void;
@@ -199,7 +207,16 @@ export const NewFaultView: React.FC<NewFaultViewProps> = ({ onNavigate }) => {
             </div>
 
             <div>
-              <label className="text-slate-300 font-medium">Report Date *</label>
+              <div className="flex items-center justify-between">
+                <label className="text-slate-300 font-medium">Report Date *</label>
+                <button
+                  type="button"
+                  onClick={() => setReportDate(getTodayDate())}
+                  className="text-[10px] text-cyan-400 hover:text-cyan-300 font-mono"
+                >
+                  Today
+                </button>
+              </div>
               <input
                 type="date"
                 value={reportDate}
@@ -210,13 +227,22 @@ export const NewFaultView: React.FC<NewFaultViewProps> = ({ onNavigate }) => {
             </div>
 
             <div>
-              <label className="text-slate-300 font-medium">Report Time *</label>
+              <div className="flex items-center justify-between">
+                <label className="text-slate-300 font-medium">Report Time (24h) *</label>
+                <button
+                  type="button"
+                  onClick={() => setReportTime(getCurrent24hTime())}
+                  className="text-[10px] text-cyan-400 hover:text-cyan-300 font-mono"
+                >
+                  Now
+                </button>
+              </div>
               <input
                 type="time"
                 value={reportTime}
                 onChange={e => setReportTime(e.target.value)}
                 required
-                className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-cyan-500 focus:outline-none"
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-cyan-500 focus:outline-none font-mono"
               />
             </div>
           </div>
@@ -400,24 +426,73 @@ export const NewFaultView: React.FC<NewFaultViewProps> = ({ onNavigate }) => {
             </div>
 
             <div>
-              <label className="text-slate-300 font-medium">Maintenance Start (Datetime or Time)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-slate-300 font-medium">Maintenance Start (24h)</label>
+                <div className="flex items-center gap-1 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => setMaintenanceStart(getCurrent24hTime())}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-400 font-mono"
+                  >
+                    Now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMaintenanceStart(reportTime)}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
+                  >
+                    Report Time
+                  </button>
+                </div>
+              </div>
               <input
                 type="text"
                 value={maintenanceStart}
                 onChange={e => setMaintenanceStart(e.target.value)}
-                placeholder="e.g. 10:15 or 2026-09-15T10:15"
-                className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-cyan-500 focus:outline-none"
+                placeholder="HH:mm or YYYY-MM-DD HH:mm (24h)"
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white font-mono focus:border-cyan-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="text-slate-300 font-medium">Maintenance End (Datetime or Time)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-slate-300 font-medium">Maintenance End (24h)</label>
+                <div className="flex items-center gap-1 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => setMaintenanceEnd(getCurrent24hTime())}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-400 font-mono"
+                  >
+                    Now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const base = maintenanceStart || reportTime || getCurrent24hTime();
+                      setMaintenanceEnd(offset24hTime(base, 30));
+                    }}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono"
+                  >
+                    +30m
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const base = maintenanceStart || reportTime || getCurrent24hTime();
+                      setMaintenanceEnd(offset24hTime(base, 60));
+                    }}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono"
+                  >
+                    +1h
+                  </button>
+                </div>
+              </div>
               <input
                 type="text"
                 value={maintenanceEnd}
                 onChange={e => setMaintenanceEnd(e.target.value)}
-                placeholder="e.g. 10:45 or 2026-09-15T10:45"
-                className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-cyan-500 focus:outline-none"
+                placeholder="HH:mm or YYYY-MM-DD HH:mm (24h)"
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white font-mono focus:border-cyan-500 focus:outline-none"
               />
             </div>
 

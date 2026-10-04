@@ -325,6 +325,11 @@ export class CMMSStore {
       }
     }
 
+    if (state.users.some(u => u.roleId === 'role_admin' && u.status === 'active') && !state.settings.isInitialized) {
+      state.settings.isInitialized = true;
+      modified = true;
+    }
+
     if (modified) {
       this.persistSync(state);
     }

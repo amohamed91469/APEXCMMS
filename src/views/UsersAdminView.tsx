@@ -15,6 +15,7 @@ import {
 import { api } from '../api/client.ts';
 import { useCMMS } from '../context/CMMSContext.tsx';
 import { User, Role } from '../types/cmms.ts';
+import { format24hDateTime } from '../utils/timeCalculations.ts';
 
 export const UsersAdminView: React.FC = () => {
   const { showToast, user: currentUser } = useCMMS();
@@ -277,7 +278,7 @@ export const UsersAdminView: React.FC = () => {
                       </td>
 
                       <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
-                        {u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}
+                        {u.lastLogin ? format24hDateTime(u.lastLogin) : 'Never'}
                       </td>
 
                       <td className="py-3 px-4 text-right whitespace-nowrap">

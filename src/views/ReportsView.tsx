@@ -159,9 +159,61 @@ export const ReportsView: React.FC = () => {
 
         {/* Filter Parameters */}
         <div className="space-y-3 pt-2 border-t border-slate-800">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Scope & Date Range (Optional Filter)
-          </label>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Scope & Date Range (Optional Filter)
+            </label>
+            <div className="flex items-center gap-1.5 text-[11px]">
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  setStartDate(today);
+                  setEndDate(today);
+                }}
+                className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date();
+                  const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+                  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+                  setStartDate(start);
+                  setEndDate(end);
+                }}
+                className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
+              >
+                This Month
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date();
+                  const past = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+                  setStartDate(past);
+                  setEndDate(now.toISOString().slice(0, 10));
+                }}
+                className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
+              >
+                Last 30 Days
+              </button>
+              {(startDate || endDate) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                  }}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-red-900/50 text-red-400"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
             <div>
               <label className="text-slate-300 font-medium">Start Date</label>

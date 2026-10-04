@@ -9,14 +9,15 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  LogIn
 } from 'lucide-react';
 import { api, setStoredToken } from '../api/client.ts';
 import { useCMMS } from '../context/CMMSContext.tsx';
 import { StructureLevel } from '../types/cmms.ts';
 
 export const FirstRunWizard: React.FC = () => {
-  const { refreshAuth, showToast } = useCMMS();
+  const { refreshAuth, setIsInitialized, showToast } = useCMMS();
   const [step, setStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -165,8 +166,22 @@ export const FirstRunWizard: React.FC = () => {
                 <p className="text-xs text-slate-400">Enterprise Modular Maintenance & Fault Tracking Architecture</p>
               </div>
             </div>
-            <div className="text-xs font-semibold px-3 py-1 bg-cyan-950 border border-cyan-800/60 text-cyan-400 rounded-full">
-              Step {step} of 4
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsInitialized(true);
+                  refreshAuth();
+                }}
+                className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-700/60 hover:bg-slate-700 border border-slate-600 transition-colors"
+                title="If an administrator already exists, switch to the login screen"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Existing Admin? Sign In</span>
+              </button>
+              <div className="text-xs font-semibold px-3 py-1 bg-cyan-950 border border-cyan-800/60 text-cyan-400 rounded-full">
+                Step {step} of 4
+              </div>
             </div>
           </div>
 
@@ -204,9 +219,25 @@ export const FirstRunWizard: React.FC = () => {
         {/* Wizard Body */}
         <div className="p-8 flex-1 overflow-y-auto max-h-[65vh]">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-950/50 border border-red-800/80 text-red-200 text-sm flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-              <div>{error}</div>
+            <div className="mb-6 p-4 rounded-xl bg-red-950/60 border border-red-850/80 text-red-200 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-white">Setup Notice</div>
+                  <div className="text-red-200 text-xs mt-0.5">{error}</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsInitialized(true);
+                  refreshAuth();
+                }}
+                className="shrink-0 px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Go to Sign In Screen</span>
+              </button>
             </div>
           )}
 

@@ -10,11 +10,15 @@ authRouter.get('/status', (req, res) => {
   const users = store.getUsers();
   const hasAdmin = users.some(u => u.roleId === 'role_admin' && u.status === 'active');
   const settings = store.getSettings();
+  const isInitialized = hasAdmin || Boolean(settings.isInitialized);
 
   res.json({
-    isInitialized: settings.isInitialized && hasAdmin,
+    isInitialized,
     hasAdmin,
-    settings
+    settings: {
+      ...settings,
+      isInitialized
+    }
   });
 });
 
@@ -23,7 +27,7 @@ authRouter.post('/setup', (req, res) => {
   const users = store.getUsers();
   const hasAdmin = users.some(u => u.roleId === 'role_admin');
   if (hasAdmin) {
-    return res.status(400).json({ error: 'System has already been initialized with an administrator.' });
+    return res.status(400).json({ error: 'System has already been initialized with an administrator. Please sign in with your credentials.' });
   }
 
   const {

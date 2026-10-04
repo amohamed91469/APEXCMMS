@@ -23,7 +23,7 @@ import {
 import { api } from '../api/client.ts';
 import { useCMMS } from '../context/CMMSContext.tsx';
 import { Fault, FaultStatus, RelevantState, Priority, FaultStatusHistory } from '../types/cmms.ts';
-import { formatMinutes } from '../utils/timeCalculations.ts';
+import { formatMinutes, format24hTime, format24hDateTime, getCurrent24hTime, offset24hTime } from '../utils/timeCalculations.ts';
 
 interface FaultTrackingViewProps {
   onNavigate: (tab: string, meta?: any) => void;
@@ -409,7 +409,7 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
                       {/* Report Date & Time */}
                       <td className="py-3 px-4 whitespace-nowrap text-slate-300">
                         <div>{f.reportDate}</div>
-                        <div className="text-[10px] text-slate-500">{f.reportTime || '00:00'}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">{format24hTime(f.reportTime) || '00:00'}</div>
                       </td>
 
                       {/* Structure Node */}
@@ -551,7 +551,7 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
                   </span>
                 </div>
                 <div className="text-xs text-slate-400 mt-0.5">
-                  Reported on {activeFault.reportDate} at {activeFault.reportTime} • Priority: <span className={getPriorityBadge(activeFault.priority)}>{activeFault.priority}</span>
+                  Reported on {activeFault.reportDate} at <span className="font-mono text-slate-200 font-medium">{format24hTime(activeFault.reportTime) || '00:00'}</span> • Priority: <span className={getPriorityBadge(activeFault.priority)}>{activeFault.priority}</span>
                 </div>
               </div>
               <button
@@ -599,27 +599,84 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
               {/* Maintenance Work & Calculations */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Maintenance Start</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Maintenance Start (24h)
+                    </label>
+                    {modalMode === 'edit' && (
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => setMStartInput(getCurrent24hTime())}
+                          className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-400 font-mono"
+                        >
+                          Now
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMStartInput(format24hTime(activeFault.reportTime) || '00:00')}
+                          className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono"
+                        >
+                          Report Time
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <input
                     type="text"
                     disabled={modalMode === 'view'}
                     readOnly={modalMode === 'view'}
                     value={mStartInput}
                     onChange={e => setMStartInput(e.target.value)}
-                    placeholder="YYYY-MM-DDTHH:mm or HH:mm"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:border-cyan-500 disabled:opacity-60"
+                    placeholder="HH:mm or YYYY-MM-DD HH:mm (24h)"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:border-cyan-500 disabled:opacity-60 font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Maintenance End</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Maintenance End (24h)
+                    </label>
+                    {modalMode === 'edit' && (
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => setMEndInput(getCurrent24hTime())}
+                          className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-400 font-mono"
+                        >
+                          Now
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const base = mStartInput || format24hTime(activeFault.reportTime) || getCurrent24hTime();
+                            setMEndInput(offset24hTime(base, 30));
+                          }}
+                          className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono"
+                        >
+                          +30m
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const base = mStartInput || format24hTime(activeFault.reportTime) || getCurrent24hTime();
+                            setMEndInput(offset24hTime(base, 60));
+                          }}
+                          className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono"
+                        >
+                          +1h
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <input
                     type="text"
                     disabled={modalMode === 'view'}
                     readOnly={modalMode === 'view'}
                     value={mEndInput}
                     onChange={e => setMEndInput(e.target.value)}
-                    placeholder="YYYY-MM-DDTHH:mm or HH:mm"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:border-cyan-500 disabled:opacity-60"
+                    placeholder="HH:mm or YYYY-MM-DD HH:mm (24h)"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white focus:border-cyan-500 disabled:opacity-60 font-mono"
                   />
                 </div>
               </div>
@@ -737,7 +794,7 @@ export const FaultTrackingView: React.FC<FaultTrackingViewProps> = ({ onNavigate
                           {h.notes && <div className="text-[11px] text-slate-400">{h.notes}</div>}
                         </div>
                         <div className="text-right text-[10px] text-slate-500">
-                          <div>{new Date(h.changedAt).toLocaleString()}</div>
+                          <div className="font-mono">{format24hDateTime(h.changedAt)}</div>
                           <div>By: {h.changedByName || h.changedBy}</div>
                         </div>
                       </div>
